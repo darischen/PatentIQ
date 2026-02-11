@@ -1,6 +1,6 @@
 # Patentiq AI
 
-AI-powered patent search and drafting assistant built to simplify USPTO research for students, inventors, and early-stage founders.
+AI-powered patent search and drafting assistant built to simplify Patent Websites research for students, inventors, and early-stage founders.
 
 ---
 
