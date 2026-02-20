@@ -27,6 +27,6 @@ CREATE TABLE IF NOT EXISTS draft_suggestions (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Indexing for performance
+-- Indexing e
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_patent_queries_user_id ON patent_queries(user_id);
