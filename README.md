@@ -1,3 +1,9 @@
+<p align="center">
+<img src="https://img.shields.io/badge/Python-3.10-blue">
+<img src="https://img.shields.io/badge/OpenAI-Embeddings-green">
+<img src="https://img.shields.io/badge/Status-Active-success">
+</p>
+
 <h1 align="center">🚀 Patent Semantic Search</h1>
 
 <p align="center">
