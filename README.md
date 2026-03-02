@@ -1,189 +1,166 @@
-Patent Semantic Search
+<h1 align="center">🚀 Patent Semantic Search</h1>
 
-A powerful semantic search system for patent data that generates vector embeddings using OpenAI models and retrieves patents based on meaning — not just keywords.
+<p align="center">
+A semantic search engine for patent data that generates vector embeddings using OpenAI models
+and retrieves patents based on <b>meaning</b> — not just keywords.
+</p>
 
-This project enables intelligent patent discovery through vector similarity search.
+<hr>
 
-🧠 Overview
+<h2>📌 Overview</h2>
 
-Traditional patent search depends on exact keyword matching, often missing relevant inventions described differently.
+<p>
+Traditional patent search relies on keyword matching, which often misses semantically related inventions described using different terminology.
+</p>
 
-This system solves that by:
+<p><b>This system solves that by:</b></p>
 
-Converting patent text into vector embeddings
+<ul>
+  <li>Converting patent text into vector embeddings</li>
+  <li>Storing and indexing embeddings</li>
+  <li>Performing semantic similarity search against user queries</li>
+</ul>
 
-Storing and indexing embeddings
+<p><b>Ideal For:</b></p>
 
-Comparing semantic similarity with user queries
+<ul>
+  <li>🔍 Prior-art search</li>
+  <li>📄 Similar patent discovery</li>
+  <li>📊 Patent clustering and analytics</li>
+  <li>🤖 AI-powered IP research tools</li>
+</ul>
 
-Ideal for:
+<hr>
 
-🔍 Prior-art search
+<h2>🏗️ System Architecture</h2>
 
-📄 Similar patent discovery
+<pre>
+Patent Dataset (CSV / JSON / Text)
+        │
+        ▼
+embed_patents.py
+(Generate Embeddings)
+        │
+        ▼
+Stored Embeddings (PKL / Vector DB)
+        │
+        ▼
+search_patents.py
+(Query → Embedding → Similarity)
+        │
+        ▼
+Ranked Patent Results
+</pre>
 
-📊 Patent clustering and analytics
+<hr>
 
-🤖 AI-driven IP research tools
+<h2>⚙️ Step-by-Step Workflow</h2>
 
-🏗️ System Architecture
-                ┌──────────────────────┐
-                │   Patent Dataset     │
-                │ (CSV / JSON / Text)  │
-                └──────────┬───────────┘
-                           │
-                           ▼
-                ┌──────────────────────┐
-                │  embed_patents.py    │
-                │  (Generate Embeddings)
-                └──────────┬───────────┘
-                           │
-                           ▼
-                ┌──────────────────────┐
-                │  Stored Embeddings   │
-                │  (PKL / Vector DB)   │
-                └──────────┬───────────┘
-                           │
-                           ▼
-                ┌──────────────────────┐
-User Query ───► │ search_patents.py   │
-                │ (Query Embedding +   │
-                │  Similarity Search)  │
-                └──────────┬───────────┘
-                           │
-                           ▼
-                ┌──────────────────────┐
-                │ Ranked Similar       │
-                │ Patent Results       │
-                └──────────────────────┘
-⚙️ Step-by-Step Workflow
+<h3>Step 1 — Prepare Patent Data</h3>
+<ul>
+  <li>Collect patent title, abstract, description</li>
+  <li>Store in CSV / JSON / Text format</li>
+</ul>
 
+<h3>Step 2 — Generate Embeddings</h3>
 
-Step 1: Data Preparation
+<pre><code>python embed_patents.py --input data/patents.csv --output data/embeddings.pkl</code></pre>
 
-Collect patent data (title, abstract, description)
+<ol>
+  <li>Patent text is sent to OpenAI embedding model</li>
+  <li>Vector embeddings are generated</li>
+  <li>Embeddings are saved locally</li>
+</ol>
 
-Store in CSV, JSON, or text format
+<h3>Step 3 — Perform Semantic Search</h3>
 
-Ensure clean and structured text
+<pre><code>python search_patents.py --embeddings data/embeddings.pkl --query "machine learning for autonomous vehicles"</code></pre>
 
-Step 2: Generate Embeddings
+<ol>
+  <li>Query is converted into embedding</li>
+  <li>Cosine similarity is computed</li>
+  <li>Patents are ranked by similarity score</li>
+</ol>
 
-Script: embed_patents.py
+<h3>Step 4 — Test API Connection (Optional)</h3>
 
-What it does:
+<pre><code>python test_openai.py</code></pre>
 
-Reads patent text
+<hr>
 
-Sends text to OpenAI embedding model
+<h2>📁 Repository Structure</h2>
 
-Generates vector embeddings
-
-Saves embeddings locally (.pkl file or similar)
-
-Run:
-
-python embed_patents.py --input data/patents.csv --output data/embeddings.pkl
-
-Output:
-
-Serialized file containing patent text + embeddings
-
-Step 3: Store Embeddings
-
-Currently:
-
-Stored locally using Pickle
-
-Optional extension:
-
-FAISS (for fast similarity search)
-
-Pinecone (cloud vector DB)
-
-Qdrant / Weaviate
-
-Step 4: Perform Semantic Search
-
-Script: search_patents.py
-
-What it does:
-
-Converts user query to embedding
-
-Computes cosine similarity with stored embeddings
-
-Ranks patents by similarity score
-
-Returns top matching results
-
-Run:
-
-python search_patents.py --embeddings data/embeddings.pkl --query "machine learning for autonomous vehicles"
-
-Output:
-
-Ranked list of semantically similar patents
-
-Step 5: API Test (Optional)
-
-Script: test_openai.py
-
-python test_openai.py
-
-Verifies OpenAI API connectivity.
-
-📁 Repository Structure
+<pre>
 patent-semantic-search/
 │
-├── embed_patents.py      # Generate and store embeddings
-├── search_patents.py     # Perform semantic similarity search
-├── test_openai.py        # Test OpenAI API connection
-├── requirements.txt      # Project dependencies
-└── README.md             # Documentation
-🚀 Key Features
+├── embed_patents.py
+├── search_patents.py
+├── test_openai.py
+├── requirements.txt
+└── README.md
+</pre>
 
-Semantic patent search using vector embeddings
+<hr>
 
-Lightweight Python implementation
+<h2>🛠 Installation</h2>
 
-Works with structured patent datasets
+<h3>1️⃣ Clone Repository</h3>
 
-Easily extendable to large-scale vector databases
+<pre><code>git clone https://github.com/NATASHASAINI/patent-semantic-search.git
+cd patent-semantic-search</code></pre>
 
-Modular architecture for research experimentation
+<h3>2️⃣ Create Virtual Environment</h3>
 
-🛠️ Installation & Setup
-1️⃣ Clone Repository
-git clone https://github.com/NATASHASAINI/patent-semantic-search.git
-cd patent-semantic-search
-2️⃣ Create Virtual Environment
-python3 -m venv venv
-source venv/bin/activate   # Mac/Linux
-venv\Scripts\activate      # Windows
-3️⃣ Install Dependencies
-pip install -r requirements.txt
-4️⃣ Set OpenAI API Key
+<pre><code>python3 -m venv venv
+source venv/bin/activate      # Mac/Linux
+venv\Scripts\activate         # Windows</code></pre>
 
-Mac/Linux:
+<h3>3️⃣ Install Dependencies</h3>
 
-export OPENAI_API_KEY="your_openai_api_key"
+<pre><code>pip install -r requirements.txt</code></pre>
 
-Windows:
+<h3>4️⃣ Set OpenAI API Key</h3>
 
-setx OPENAI_API_KEY "your_openai_api_key"
-📊 How It Works (Technical Flow)
+<b>Mac/Linux:</b>
 
-Patent text → OpenAI embedding model
+<pre><code>export OPENAI_API_KEY="your_openai_api_key"</code></pre>
 
-Embedding stored as high-dimensional vector
+<b>Windows:</b>
 
-User query → converted to embedding
+<pre><code>setx OPENAI_API_KEY "your_openai_api_key"</code></pre>
 
-Cosine similarity computed
+<hr>
 
-Results ranked by similarity score
+<h2>🔬 How It Works</h2>
 
-Unlike keyword search, this captures contextual meaning and conceptual similarity.
+<ol>
+  <li>Patent text → embedding vector</li>
+  <li>Stored as high-dimensional representation</li>
+  <li>User query → embedding vector</li>
+  <li>Cosine similarity computed</li>
+  <li>Top matches returned</li>
+</ol>
 
+<p>
+This enables conceptual search instead of literal keyword matching.
+</p>
 
+<hr>
+
+<h2>🚀 Future Improvements</h2>
+
+<ul>
+  <li>FAISS integration for large-scale search</li>
+  <li>Streamlit UI</li>
+  <li>FastAPI deployment</li>
+  <li>USPTO bulk ingestion</li>
+  <li>Vector database integration</li>
+</ul>
+
+<hr>
+
+<hr>
+
+<p align="center">
+<b>Built for AI-powered patent intelligence.</b>
+</p>
