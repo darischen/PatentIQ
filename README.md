@@ -48,7 +48,7 @@ embed_patents.py
 (Generate Embeddings)
         │
         ▼
-Stored Embeddings (PKL / Vector DB)
+Stored Embeddings (PgVector /Vector DB)
         │
         ▼
 search_patents.py
