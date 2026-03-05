@@ -101,7 +101,7 @@ However, semantically similar inventions often use different terminology.
   <li>Title</li>
   <li>Abstract</li>
   <li>Description</li>
-  <li>Claims (optional)</li>
+  <li>Claims </li>
 </ul>
 
 <p>Example:</p>
