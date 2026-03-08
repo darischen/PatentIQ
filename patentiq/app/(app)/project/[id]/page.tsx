@@ -210,22 +210,52 @@ export default function ProjectWelcomePage() {
 
   return (
     <div className="min-h-screen bg-[#f5f8ff] flex flex-col items-center overflow-x-hidden font-sans">
-      {/* Simple Header */}
-      <header className="w-full flex items-center justify-between px-8 py-4">
+      {/* TopBar - Welcome/Home style */}
+      <div className="w-full px-12 pt-8 pb-2 flex items-center justify-between flex-shrink-0">
+        {/* Left Section: Brand */}
         <Link href="/projects" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
+          <div className="w-10 h-10 bg-[#4f46e5] rounded-full flex items-center justify-center shadow-lg shadow-indigo-500/30 transition-transform group-hover:scale-105">
             <Grid className="text-white w-5 h-5" />
           </div>
-          <span className="font-bold text-slate-900 tracking-tight text-lg group-hover:text-indigo-600 transition-colors">
-            PatentIQ
-          </span>
+          <span className="text-slate-900 font-bold text-[18px] tracking-tight hidden sm:block">PatentIQ</span>
         </Link>
-        <div className="flex items-center gap-4">
-          <Link href="/projects" className="text-slate-400 hover:text-slate-600 text-sm font-bold">
-            All Projects
+
+        {/* Center Section: Dark Navigation Pill */}
+        <div className="bg-[#424b6e] rounded-full h-[54px] flex items-center px-10 shadow-xl border border-white/5">
+          <div className="flex items-center justify-center gap-8 md:gap-12">
+            <Link href="/projects" className="text-[13px] font-medium transition-all text-slate-400 hover:text-white">
+              Projects
+            </Link>
+            <span className="text-[13px] font-medium text-white">
+              Home/Input
+            </span>
+            <Link href="/history" className="text-[13px] font-medium transition-all text-slate-400 hover:text-white">
+              History
+            </Link>
+            <Link href="/help" className="text-[13px] font-medium transition-all text-slate-400 hover:text-white">
+              Help
+            </Link>
+            <Link href="/settings" className="text-[13px] font-medium transition-all text-slate-400 hover:text-white">
+              Settings
+            </Link>
+          </div>
+        </div>
+
+        {/* Right Section: Profile */}
+        <div className="flex items-center justify-end">
+          <Link
+            href="/profile"
+            className="w-10 h-10 rounded-full border-4 border-white overflow-hidden cursor-pointer hover:ring-2 hover:ring-indigo-200 transition-all shadow-xl group relative"
+          >
+            <img
+              src="https://picsum.photos/seed/intel-user-88/100/100"
+              alt="User"
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+            />
+            <div className="absolute inset-0 bg-indigo-600/10 opacity-0 group-hover:opacity-100 transition-opacity" />
           </Link>
         </div>
-      </header>
+      </div>
 
       {/* Hero Header */}
       <div

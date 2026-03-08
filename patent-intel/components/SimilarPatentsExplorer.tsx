@@ -1,14 +1,14 @@
-'use client';
 
 import React, { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import {
-  ChevronRight,
-  ChevronDown,
-  Filter,
-  X,
-  Bookmark,
-  ExternalLink,
+import { 
+  ChevronRight, 
+  Search, 
+  Filter, 
+  Bell, 
+  ChevronDown, 
+  X, 
+  Bookmark, 
+  ExternalLink, 
   AlertTriangle,
   FileText,
   Target,
@@ -20,7 +20,12 @@ import {
   CalendarDays,
   Globe
 } from 'lucide-react';
-import { useProject } from '@/lib/context/ProjectContext';
+import { AnalysisResult, Screen } from '../types';
+
+interface SimilarPatentsExplorerProps {
+  data: AnalysisResult;
+  onNavigate: (screen: Screen) => void;
+}
 
 interface MockPatent {
   id: string;
@@ -33,11 +38,7 @@ interface MockPatent {
   abstract: string;
 }
 
-export default function SimilarPatentsPage() {
-  const { id } = useParams<{ id: string }>();
-  const router = useRouter();
-  const { analysisData } = useProject();
-
+const SimilarPatentsExplorer: React.FC<SimilarPatentsExplorerProps> = ({ data, onNavigate }) => {
   const [selectedId, setSelectedId] = useState<string>('2');
 
   const mockPatents: MockPatent[] = [
@@ -105,14 +106,6 @@ export default function SimilarPatentsPage() {
 
   const selectedPatent = mockPatents.find(p => p.id === selectedId) || mockPatents[1];
 
-  if (!analysisData) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-slate-500 text-sm font-medium">No analysis data. Run an analysis first.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="h-full flex flex-col animate-in fade-in duration-500 overflow-hidden">
       {/* Top Header */}
@@ -122,12 +115,12 @@ export default function SimilarPatentsPage() {
             <h1 className="text-3xl font-black text-[#0f172a] tracking-tight">Top Similar Patents</h1>
             <div className="flex items-center gap-2 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{analysisData.similarPatents} Global Matches</span>
+              <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{data.similarPatents} Global Matches</span>
             </div>
           </div>
           <p className="text-slate-500 text-sm font-medium">AI-driven semantic clustering of the competitive patent landscape.</p>
         </div>
-
+        
         <div className="flex items-center gap-4">
           <button className="bg-white border border-slate-200 text-slate-800 px-6 py-2.5 rounded-xl text-xs font-black shadow-sm hover:border-slate-300 transition-all flex items-center gap-2 active:scale-95">
             <FileText size={16} className="text-indigo-500" /> Export Competitive Audit
@@ -139,12 +132,7 @@ export default function SimilarPatentsPage() {
         {/* Left Side: Search & Grid */}
         <div className="flex-1 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar">
           <nav className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
-            <span
-              className="cursor-pointer hover:text-indigo-600 transition-colors"
-              onClick={() => router.push(`/project/${id}/dashboard`)}
-            >
-              Analysis Pipeline
-            </span>
+            <span className="cursor-pointer hover:text-indigo-600 transition-colors" onClick={() => onNavigate('dashboard')}>Analysis Pipeline</span>
             <ChevronRight size={12} />
             <span className="text-slate-800 tracking-tight">Competitive Landscape</span>
           </nav>
@@ -171,12 +159,12 @@ export default function SimilarPatentsPage() {
           {/* Patent Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6 pb-12">
             {mockPatents.map((patent) => (
-              <div
+              <div 
                 key={patent.id}
                 onClick={() => setSelectedId(patent.id)}
                 className={`bg-white rounded-[2.5rem] p-8 border-2 transition-all duration-300 cursor-pointer relative group flex flex-col justify-between h-[360px] ${
-                  selectedId === patent.id
-                    ? 'border-[#0f172a] shadow-2xl shadow-slate-200 -translate-y-1'
+                  selectedId === patent.id 
+                    ? 'border-[#0f172a] shadow-2xl shadow-slate-200 -translate-y-1' 
                     : 'border-white shadow-sm hover:border-slate-100 hover:-translate-y-0.5'
                 }`}
               >
@@ -185,7 +173,7 @@ export default function SimilarPatentsPage() {
                     Critical Match
                   </div>
                 )}
-
+                
                 <div>
                   <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
@@ -224,13 +212,13 @@ export default function SimilarPatentsPage() {
                     <span className={patent.match > 85 ? 'text-emerald-500' : 'text-slate-400'}>{patent.match}%</span>
                   </div>
                   <div className="w-full h-2 bg-slate-50 rounded-full overflow-hidden border border-slate-100 shadow-inner p-[1px]">
-                    <div
+                    <div 
                       className={`h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px] ${
-                        patent.match > 85
-                          ? 'bg-emerald-500 shadow-emerald-200'
-                          : patent.match > 60
-                            ? 'bg-amber-400 shadow-amber-200'
-                            : 'bg-slate-300 shadow-slate-100'
+                        patent.match > 85 
+                        ? 'bg-emerald-500 shadow-emerald-200' 
+                        : patent.match > 60 
+                        ? 'bg-amber-400 shadow-amber-200' 
+                        : 'bg-slate-300 shadow-slate-100'
                       }`}
                       style={{ width: `${patent.match}%` }}
                     />
@@ -241,42 +229,42 @@ export default function SimilarPatentsPage() {
           </div>
         </div>
 
-        {/* Right Side: Detailed Intelligence Sidebar */}
+        {/* Right Side: Detailed Intelligence Sidebar - IMPROVED */}
         <div className="w-[480px] bg-white rounded-[3rem] shadow-[0_40px_80px_rgba(0,0,0,0.08)] border border-slate-100 flex flex-col sticky top-0 h-[calc(100vh-170px)] overflow-hidden">
           {/* Enhanced Animated Header */}
           <div className="relative overflow-hidden flex-shrink-0">
-            <div className={`absolute inset-0 opacity-10 blur-3xl transition-colors duration-500 ${selectedPatent.match > 85 ? 'bg-emerald-500' : 'bg-indigo-500'}`} />
-            <div className="p-10 pb-6 relative z-10">
-              <div className="flex justify-between items-center mb-10">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-indigo-900 text-white rounded-xl shadow-lg shadow-indigo-100">
-                    <Target size={18} />
+             <div className={`absolute inset-0 opacity-10 blur-3xl transition-colors duration-500 ${selectedPatent.match > 85 ? 'bg-emerald-500' : 'bg-indigo-500'}`} />
+             <div className="p-10 pb-6 relative z-10">
+                <div className="flex justify-between items-center mb-10">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-indigo-900 text-white rounded-xl shadow-lg shadow-indigo-100">
+                      <Target size={18} />
+                    </div>
+                    <div>
+                      <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] block leading-none">Intelligence Deep-Dive</span>
+                      <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mt-1">Ref #{selectedPatent.id}</span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] block leading-none">Intelligence Deep-Dive</span>
-                    <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mt-1">Ref #{selectedPatent.id}</span>
+                  <button onClick={() => setSelectedId('')} className="p-2.5 bg-slate-50 text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all rounded-full border border-slate-100">
+                    <X size={20} />
+                  </button>
+                </div>
+                
+                <h2 className="text-[28px] font-black text-slate-900 leading-[1.1] tracking-tight mb-6">
+                  {selectedPatent.title}
+                </h2>
+                
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Building2 size={14} />
+                    <span className="text-[12px] font-black text-slate-600 uppercase tracking-tight">{selectedPatent.assignee}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <CalendarDays size={14} />
+                    <span className="text-[12px] font-black text-slate-600 uppercase tracking-tight">{selectedPatent.filingDate}</span>
                   </div>
                 </div>
-                <button onClick={() => setSelectedId('')} className="p-2.5 bg-slate-50 text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all rounded-full border border-slate-100">
-                  <X size={20} />
-                </button>
-              </div>
-
-              <h2 className="text-[28px] font-black text-slate-900 leading-[1.1] tracking-tight mb-6">
-                {selectedPatent.title}
-              </h2>
-
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2 text-slate-400">
-                  <Building2 size={14} />
-                  <span className="text-[12px] font-black text-slate-600 uppercase tracking-tight">{selectedPatent.assignee}</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-400">
-                  <CalendarDays size={14} />
-                  <span className="text-[12px] font-black text-slate-600 uppercase tracking-tight">{selectedPatent.filingDate}</span>
-                </div>
-              </div>
-            </div>
+             </div>
           </div>
 
           <div className="px-10 flex-1 overflow-y-auto custom-scrollbar pb-10 space-y-12">
@@ -298,21 +286,21 @@ export default function SimilarPatentsPage() {
               </div>
             </div>
 
-            {/* Critical Overlap Zone */}
+            {/* Critical Overlap Zone - Refined */}
             <div className="bg-[#fef2f2] rounded-[2.5rem] p-8 border border-rose-100 relative overflow-hidden group/risk">
-              <div className="absolute -right-8 -bottom-8 text-rose-500/5 group-hover/risk:scale-110 transition-transform duration-700">
-                <ShieldAlert size={160} />
-              </div>
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3 text-rose-600">
-                  <AlertTriangle size={20} className="animate-pulse" />
-                  <span className="text-[12px] font-black uppercase tracking-[0.2em]">Risk Exposure Map</span>
-                </div>
-                <span className="bg-white/60 px-3 py-1 rounded-full text-[9px] font-black text-rose-500 uppercase tracking-widest border border-rose-100/50">Level: High</span>
-              </div>
-              <p className="text-[15px] text-rose-950 font-semibold leading-[1.6] relative z-10">
-                Claims 14-18 regarding <span className="text-rose-900 font-black underline decoration-rose-300 decoration-2 underline-offset-4 tracking-tight italic">"decentralized mesh synchronization for swarm logic"</span> directly mirror your primary innovation block.
-              </p>
+               <div className="absolute -right-8 -bottom-8 text-rose-500/5 group-hover/risk:scale-110 transition-transform duration-700">
+                 <ShieldAlert size={160} />
+               </div>
+               <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3 text-rose-600">
+                    <AlertTriangle size={20} className="animate-pulse" />
+                    <span className="text-[12px] font-black uppercase tracking-[0.2em]">Risk Exposure Map</span>
+                  </div>
+                  <span className="bg-white/60 px-3 py-1 rounded-full text-[9px] font-black text-rose-500 uppercase tracking-widest border border-rose-100/50">Level: High</span>
+               </div>
+               <p className="text-[15px] text-rose-950 font-semibold leading-[1.6] relative z-10">
+                 Claims 14-18 regarding <span className="text-rose-900 font-black underline decoration-rose-300 decoration-2 underline-offset-4 tracking-tight italic">"decentralized mesh synchronization for swarm logic"</span> directly mirror your primary innovation block. 
+               </p>
             </div>
 
             {/* Detailed Abstract Section */}
@@ -335,32 +323,32 @@ export default function SimilarPatentsPage() {
 
             {/* Semantic Relevance Metrics */}
             <div className="space-y-5 pt-4">
-              <div className="flex justify-between items-end">
-                <div>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Semantic Match Intensity</span>
-                  <span className="text-[12px] font-bold text-slate-500">Based on vector embedding analysis</span>
-                </div>
-                <div className="flex items-center gap-2 text-indigo-600">
-                  <span className="text-[24px] font-black tracking-tighter">{selectedPatent.match}%</span>
-                  <Zap size={18} fill="currentColor" />
-                </div>
-              </div>
-              <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-100 p-0.5">
-                <div
-                  className="h-full bg-[#0f172a] rounded-full transition-all duration-1000 ease-out shadow-lg"
-                  style={{ width: `${selectedPatent.match}%` }}
-                />
-              </div>
+               <div className="flex justify-between items-end">
+                  <div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Semantic Match Intensity</span>
+                    <span className="text-[12px] font-bold text-slate-500">Based on vector embedding analysis</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-indigo-600">
+                    <span className="text-[24px] font-black tracking-tighter">{selectedPatent.match}%</span>
+                    <Zap size={18} fill="currentColor" />
+                  </div>
+               </div>
+               <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-100 p-0.5">
+                  <div 
+                    className="h-full bg-[#0f172a] rounded-full transition-all duration-1000 ease-out shadow-lg" 
+                    style={{ width: `${selectedPatent.match}%` }}
+                  />
+               </div>
             </div>
           </div>
 
-          {/* Sidebar Action Footer */}
+          {/* Sidebar Action Footer - Pushed up for better visibility */}
           <div className="px-10 pt-5 pb-14 bg-white border-t border-slate-100 flex items-center gap-4 flex-shrink-0">
             <button className="flex-1 h-[72px] bg-[#0f172a] text-white rounded-[1.75rem] font-black text-[14px] uppercase tracking-[0.15em] flex items-center justify-center gap-4 hover:bg-slate-800 transition-all shadow-[0_20px_40px_rgba(15,23,42,0.2)] active:scale-[0.97] group/main relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover/main:translate-x-full transition-transform duration-1000" />
-              <FileText size={20} className="text-indigo-400" />
-              View Full Patent
-              <ArrowRight size={18} className="group-hover/main:translate-x-1.5 transition-transform" />
+               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover/main:translate-x-full transition-transform duration-1000" />
+               <FileText size={20} className="text-indigo-400" />
+               View Full Patent
+               <ArrowRight size={18} className="group-hover/main:translate-x-1.5 transition-transform" />
             </button>
             <button className="w-[72px] h-[72px] bg-slate-50 border border-slate-200 text-slate-400 rounded-[1.75rem] hover:text-indigo-600 hover:border-indigo-100 hover:bg-white transition-all shadow-sm active:scale-90 flex items-center justify-center group/bookmark">
               <Bookmark size={24} className="group-hover/bookmark:fill-indigo-600 transition-all" />
@@ -368,6 +356,15 @@ export default function SimilarPatentsPage() {
           </div>
         </div>
       </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 20px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+      `}} />
     </div>
   );
-}
+};
+
+export default SimilarPatentsExplorer;

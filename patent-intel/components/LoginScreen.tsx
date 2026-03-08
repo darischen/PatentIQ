@@ -1,11 +1,12 @@
-'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Grid, Mail, Lock, User, EyeOff, Layout, FileText, BarChart3, Settings as SettingsIcon, Plus, Play } from 'lucide-react';
+import { Grid, Mail, Lock, User, ArrowRight, EyeOff, Layout, FileText, BarChart3, Settings as SettingsIcon, Search, Plus } from 'lucide-react';
 
-export default function LoginPage() {
-  const router = useRouter();
+interface LoginScreenProps {
+  onLogin: (username: string) => void;
+}
+
+const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,14 +14,14 @@ export default function LoginPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (username && email && password) {
-      router.push('/projects');
+      onLogin(username);
     }
   };
 
   return (
     <div className="min-h-screen bg-[#e2e8f0] flex items-center justify-center p-4 md:p-10 font-sans">
       <div className="w-full max-w-[1400px] h-[850px] bg-white rounded-[2.5rem] shadow-2xl flex overflow-hidden">
-
+        
         {/* Left Side: Login Form */}
         <div className="w-full lg:w-1/2 p-12 md:p-20 flex flex-col justify-between bg-white relative">
           <div>
@@ -29,7 +30,7 @@ export default function LoginPage() {
                 <Grid className="text-white w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-[#1e293b] leading-none">PatentIQ</h2>
+                <h2 className="text-lg font-bold text-[#1e293b] leading-none">Patent Intel</h2>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">IP Management Suite</p>
               </div>
             </div>
@@ -42,9 +43,9 @@ export default function LoginPage() {
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-[#1e293b]">Username</label>
                   <div className="relative">
-                    <input
+                    <input 
                       required
-                      type="text"
+                      type="text" 
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       placeholder="Enter your username"
@@ -56,9 +57,9 @@ export default function LoginPage() {
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-[#1e293b]">Email</label>
                   <div className="relative">
-                    <input
+                    <input 
                       required
-                      type="email"
+                      type="email" 
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Enter email address"
@@ -72,9 +73,9 @@ export default function LoginPage() {
                     <label className="text-sm font-bold text-[#1e293b]">Password</label>
                   </div>
                   <div className="relative">
-                    <input
+                    <input 
                       required
-                      type="password"
+                      type="password" 
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter Password"
@@ -85,12 +86,12 @@ export default function LoginPage() {
                 </div>
 
                 <div className="flex justify-start">
-                  <button type="button" className="text-sm font-bold text-[#7c3aed] hover:underline transition-all">
+                   <button type="button" className="text-sm font-bold text-[#7c3aed] hover:underline transition-all">
                     Forget Password?
                   </button>
                 </div>
 
-                <button
+                <button 
                   type="submit"
                   className="w-full bg-[#7c3aed] text-white py-4 rounded-xl font-bold text-base hover:bg-[#6d28d9] transition-all shadow-xl shadow-purple-100 active:scale-[0.99] mt-4"
                 >
@@ -101,7 +102,7 @@ export default function LoginPage() {
           </div>
 
           <div className="text-slate-400 text-xs font-medium">
-            &copy; 2025 PatentIQ. All rights reserved.
+            © 2025 Patent Intel. All rights reserved.
           </div>
         </div>
 
@@ -115,7 +116,7 @@ export default function LoginPage() {
 
           <div className="w-full max-w-2xl relative z-10 animate-in fade-in slide-in-from-right-8 duration-1000">
             <div className="mb-10 space-y-2">
-              <span className="bg-white/80 backdrop-blur px-4 py-1.5 rounded-full text-[10px] font-bold text-slate-500 uppercase tracking-widest shadow-sm">PatentIQ Overview</span>
+              <span className="bg-white/80 backdrop-blur px-4 py-1.5 rounded-full text-[10px] font-bold text-slate-500 uppercase tracking-widest shadow-sm">Patent Intel Overview</span>
               <h2 className="text-4xl font-bold text-slate-800 leading-tight">
                 Manage your technical <br /> innovations <span className="text-[#7c3aed]">more professionally</span>
               </h2>
@@ -129,7 +130,7 @@ export default function LoginPage() {
                   <div className="w-6 h-6 bg-[#7c3aed] rounded-md flex items-center justify-center">
                     <Grid className="text-white w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-slate-800">PatentIQ</span>
+                  <span className="text-xs font-bold text-slate-800">Patent Intel</span>
                 </div>
 
                 <div className="space-y-4">
@@ -176,23 +177,23 @@ export default function LoginPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Recent Activity</p>
-                  <div className="space-y-3">
-                    <div className="p-3 bg-purple-50/50 rounded-xl border border-purple-100/50 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                        <span className="text-[11px] font-bold text-slate-700">Quantum Battery Mesh Analysis</span>
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Recent Activity</p>
+                   <div className="space-y-3">
+                      <div className="p-3 bg-purple-50/50 rounded-xl border border-purple-100/50 flex items-center justify-between">
+                         <div className="flex items-center gap-3">
+                            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                            <span className="text-[11px] font-bold text-slate-700">Quantum Battery Mesh Analysis</span>
+                         </div>
+                         <span className="text-[9px] font-black text-purple-400">85% NOVELTY</span>
                       </div>
-                      <span className="text-[9px] font-black text-purple-400">85% NOVELTY</span>
-                    </div>
-                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between opacity-60">
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
-                        <span className="text-[11px] font-bold text-slate-700">Drone Propeller Optimization</span>
+                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between opacity-60">
+                         <div className="flex items-center gap-3">
+                            <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
+                            <span className="text-[11px] font-bold text-slate-700">Drone Propeller Optimization</span>
+                         </div>
+                         <span className="text-[9px] font-black text-slate-400">FINISHED</span>
                       </div>
-                      <span className="text-[9px] font-black text-slate-400">FINISHED</span>
-                    </div>
-                  </div>
+                   </div>
                 </div>
               </div>
             </div>
@@ -201,4 +202,6 @@ export default function LoginPage() {
       </div>
     </div>
   );
-}
+};
+
+export default LoginScreen;

@@ -1,19 +1,24 @@
-'use client';
 
 import React, { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import {
-  Search,
-  Filter,
-  ChevronRight,
-  AlertCircle,
-  CheckCircle2,
-  FileText,
-  Layers,
+import { 
+  Search, 
+  Filter, 
+  ChevronRight, 
+  AlertCircle, 
+  CheckCircle2, 
+  Clock, 
+  ArrowRight, 
   ExternalLink,
+  Layers,
+  FileText,
   GitCompare
 } from 'lucide-react';
-import { useProject } from '@/lib/context/ProjectContext';
+import { AnalysisResult, Screen } from '../types';
+
+interface PriorArtExplorerProps {
+  data: AnalysisResult;
+  onNavigate: (screen: Screen) => void;
+}
 
 interface PriorArtItem {
   id: string;
@@ -40,11 +45,7 @@ interface PriorArtItem {
   };
 }
 
-export default function ExplorerPage() {
-  const { id } = useParams<{ id: string }>();
-  const router = useRouter();
-  const { analysisData } = useProject();
-
+const PriorArtExplorer: React.FC<PriorArtExplorerProps> = ({ data, onNavigate }) => {
   const [selectedId, setSelectedId] = useState<string>('1');
 
   const priorArt: PriorArtItem[] = [
@@ -113,14 +114,6 @@ export default function ExplorerPage() {
 
   const activeArt = priorArt.find(a => a.id === selectedId) || priorArt[0];
 
-  if (!analysisData) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-slate-500 text-sm font-medium">No analysis data. Run an analysis first.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-[1600px] mx-auto">
       {/* Top Search & Filter Bar */}
@@ -129,14 +122,16 @@ export default function ExplorerPage() {
           <h1 className="text-2xl font-black text-slate-800">Prior Art Explorer</h1>
           <span className="bg-slate-100 text-slate-500 text-[11px] font-black px-3 py-1 rounded-full uppercase">3 Results</span>
         </div>
-        <img src="https://picsum.photos/seed/pat-88/100/100" alt="Avatar" className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm" />
+        <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm">
+          <img src="https://picsum.photos/seed/pat-88/100/100" alt="Avatar" className="w-full h-full object-cover" />
+        </div>
       </div>
 
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-xl">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <input
-            type="text"
+          <input 
+            type="text" 
             placeholder="Search patents, claims, assignees, IPC codes..."
             className="w-full bg-white border border-slate-100 rounded-xl py-3 pl-12 pr-4 text-sm focus:ring-2 focus:ring-indigo-100 outline-none shadow-sm"
           />
@@ -160,11 +155,11 @@ export default function ExplorerPage() {
       </nav>
 
       <div className="grid grid-cols-12 gap-8 h-[calc(100vh-280px)]">
-
+        
         {/* Left Column: Patent List */}
         <div className="col-span-12 lg:col-span-4 space-y-4 overflow-y-auto pr-4 custom-scrollbar">
           {priorArt.map((art) => (
-            <div
+            <div 
               key={art.id}
               onClick={() => setSelectedId(art.id)}
               className={`bg-white rounded-[1.5rem] p-6 border-2 transition-all cursor-pointer relative group ${selectedId === art.id ? 'border-indigo-500 shadow-xl' : 'border-white shadow-sm hover:border-slate-100'}`}
@@ -276,9 +271,9 @@ export default function ExplorerPage() {
               <div className="absolute top-2.5 left-0 right-0 h-0.5 bg-slate-100" />
               <div className="flex justify-between relative">
                 {[
-                  { label: 'Filed', date: activeArt.filedDate, active: true, color: 'indigo' as const },
-                  { label: 'Published', date: activeArt.publishedDate, active: true, color: 'indigo' as const },
-                  { label: 'Granted', date: activeArt.grantedDate, active: activeArt.status === 'GRANTED', color: 'emerald' as const }
+                  { label: 'Filed', date: activeArt.filedDate, active: true, color: 'indigo' },
+                  { label: 'Published', date: activeArt.publishedDate, active: true, color: 'indigo' },
+                  { label: 'Granted', date: activeArt.grantedDate, active: activeArt.status === 'GRANTED', color: 'emerald' }
                 ].map((step, i) => (
                   <div key={i} className="flex flex-col items-center">
                     <div className={`w-3 h-3 rounded-full border-2 border-white shadow-sm mb-3 z-10 transition-colors ${step.active ? (step.color === 'indigo' ? 'bg-indigo-600' : 'bg-emerald-500') : 'bg-slate-200'}`} />
@@ -324,4 +319,6 @@ export default function ExplorerPage() {
       </div>
     </div>
   );
-}
+};
+
+export default PriorArtExplorer;

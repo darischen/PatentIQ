@@ -1,57 +1,39 @@
-'use client';
 
 import React from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { useProject } from '@/lib/context/ProjectContext';
-import {
-  ChevronRight,
-  Info,
-  TrendingUp,
-  Clock,
-  AlertTriangle,
-  Sparkles,
-  Zap,
-  Thermometer,
-  Database,
+import { 
+  ChevronRight, 
+  Info, 
+  TrendingUp, 
+  Clock, 
+  AlertTriangle, 
+  Sparkles, 
+  Maximize2, 
+  Zap, 
+  Thermometer, 
+  Database, 
   CheckCircle2,
   Wand2
 } from 'lucide-react';
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip as RechartsTooltip
+import { 
+  PieChart, 
+  Pie, 
+  Cell, 
+  ResponsiveContainer, 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  Tooltip as RechartsTooltip 
 } from 'recharts';
+import { AnalysisResult, Screen } from '../types';
 
-export default function ConfidencePage() {
-  const { id } = useParams<{ id: string }>();
-  const router = useRouter();
-  const { analysisData, activeProject } = useProject();
+interface ConfidenceBreakdownProps {
+  data: AnalysisResult;
+  projectName?: string;
+  onNavigate: (screen: Screen) => void;
+}
 
-  if (!analysisData) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center space-y-4">
-          <p className="text-slate-500 text-lg font-medium">No analysis data available.</p>
-          <button
-            onClick={() => router.push(`/project/${id}/dashboard`)}
-            className="text-indigo-600 text-sm font-bold hover:underline"
-          >
-            Return to Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const data = analysisData;
-  const projectName = activeProject?.name;
-
+const ConfidenceBreakdown: React.FC<ConfidenceBreakdownProps> = ({ data, projectName, onNavigate }) => {
   const chartData = [
     { name: 'Confidence', value: data.confidence },
     { name: 'Remaining', value: 100 - data.confidence },
@@ -79,7 +61,7 @@ export default function ConfidencePage() {
       <div className="flex justify-between items-start">
         <div className="space-y-2">
           <nav className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-            <span className="hover:text-slate-600 cursor-pointer" onClick={() => router.push(`/project/${id}/dashboard`)}>Analysis</span>
+            <span className="hover:text-slate-600 cursor-pointer" onClick={() => onNavigate('dashboard')}>Analysis</span>
             <ChevronRight size={10} />
             <span className="text-slate-500">{projectName || 'Project Alpha'}</span>
             <ChevronRight size={10} />
@@ -88,7 +70,7 @@ export default function ConfidencePage() {
           <h1 className="text-[34px] font-black text-slate-900 tracking-tight">Model Confidence Breakdown</h1>
           <p className="text-slate-500 text-base font-medium">Detailed analysis of the factors contributing to the {data.confidence}% confidence score.</p>
         </div>
-
+        
         <div className="flex items-center gap-3">
           <div className="bg-indigo-50 text-indigo-600 px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest border border-indigo-100 flex items-center gap-2">
             <Zap size={14} fill="currentColor" /> AI Model v4.2
@@ -100,13 +82,13 @@ export default function ConfidencePage() {
       </div>
 
       <div className="grid grid-cols-12 gap-8 items-stretch">
-
+        
         {/* Left Column: Overall Score & Parameters */}
         <div className="col-span-12 lg:col-span-4 space-y-8 flex flex-col">
           {/* Main Score Card */}
           <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-slate-100 flex flex-col items-center justify-center flex-1 min-h-[460px]">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-12">Overall Confidence Score</p>
-
+            
             <div className="relative w-64 h-64 mb-10 group">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -151,7 +133,7 @@ export default function ConfidencePage() {
               </div>
               <Info size={14} className="text-slate-200 cursor-help" />
             </div>
-
+            
             <div className="space-y-6">
               <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100/50">
                 <div>
@@ -160,7 +142,7 @@ export default function ConfidencePage() {
                 </div>
                 <Thermometer size={16} className="text-blue-400" />
               </div>
-
+              
               <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100/50">
                 <div>
                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Corpus Size</p>
@@ -168,7 +150,7 @@ export default function ConfidencePage() {
                 </div>
                 <Database size={16} className="text-amber-400" />
               </div>
-
+              
               <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100/50">
                 <div>
                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Last Validation</p>
@@ -185,7 +167,7 @@ export default function ConfidencePage() {
           {/* Confidence Factors Table Card */}
           <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-slate-100 flex-1">
             <h3 className="text-xl font-black text-slate-900 mb-10">Confidence Factors</h3>
-
+            
             <div className="space-y-10">
               {factors.map((f, i) => (
                 <div key={i} className="space-y-4">
@@ -197,7 +179,7 @@ export default function ConfidencePage() {
                     <span className="text-lg font-black text-slate-900">{f.score}%</span>
                   </div>
                   <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div
+                    <div 
                       className="h-full rounded-full transition-all duration-1000 ease-out"
                       style={{ width: `${f.score}%`, backgroundColor: f.color }}
                     />
@@ -226,27 +208,27 @@ export default function ConfidencePage() {
                   Last 1 Hour <ChevronRight size={10} className="inline ml-1" />
                 </div>
               </div>
-
+              
               <div className="flex-1 min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={historyData}>
-                    <XAxis
-                      dataKey="time"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 700 }}
+                    <XAxis 
+                      dataKey="time" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 700 }} 
                       padding={{ left: 10, right: 10 }}
                     />
                     <YAxis hide domain={['dataMin - 5', 'dataMax + 5']} />
-                    <RechartsTooltip
+                    <RechartsTooltip 
                       contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 20px rgba(0,0,0,0.05)', fontSize: '12px' }}
                     />
-                    <Line
-                      type="monotone"
-                      dataKey="score"
-                      stroke="#6366f1"
-                      strokeWidth={4}
-                      dot={{ r: 4, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }}
+                    <Line 
+                      type="monotone" 
+                      dataKey="score" 
+                      stroke="#6366f1" 
+                      strokeWidth={4} 
+                      dot={{ r: 4, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }} 
                       activeDot={{ r: 6, strokeWidth: 0 }}
                     />
                   </LineChart>
@@ -268,7 +250,7 @@ export default function ConfidencePage() {
             {/* AI Recommendation Card */}
             <div className="col-span-12 lg:col-span-5 bg-[#1e293b] rounded-[2rem] p-8 text-white flex flex-col justify-between shadow-2xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -mr-10 -mt-10" />
-
+              
               <div>
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-8 h-8 bg-amber-400 text-slate-900 rounded-lg flex items-center justify-center">
@@ -276,7 +258,7 @@ export default function ConfidencePage() {
                   </div>
                   <h3 className="text-[13px] font-black uppercase tracking-[0.15em]">AI Recommendation</h3>
                 </div>
-
+                
                 <p className="text-[15px] font-medium leading-relaxed text-slate-300">
                   To increase confidence to <span className="text-white font-black">{'>'}95%</span>, consider elaborating on the <span className="text-white font-black underline decoration-indigo-400 underline-offset-4">"Swarm Logic Coordination"</span> section specifically regarding latency handling.
                 </p>
@@ -291,4 +273,6 @@ export default function ConfidencePage() {
       </div>
     </div>
   );
-}
+};
+
+export default ConfidenceBreakdown;

@@ -39,9 +39,12 @@ export default function TopBar() {
           href="/profile"
           className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 shadow-sm cursor-pointer hover:ring-2 hover:ring-indigo-100 transition-all ml-1 relative group"
         >
-          <div className="w-full h-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
-            JI
-          </div>
+          <img
+            src="https://picsum.photos/seed/patent-pro-expert/100/100"
+            alt="User Avatar"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+          />
+          <div className="absolute inset-0 bg-indigo-600/10 opacity-0 group-hover:opacity-100 transition-opacity" />
         </Link>
       </div>
     </header>

@@ -309,7 +309,7 @@ function SandboxContent({ data, id }: { data: AnalysisResult; id: string }) {
             <div className="bg-[#f0f9c1] p-10 relative flex-shrink-0 border-b border-slate-200/50">
               <div className="flex items-center gap-2 text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4">
                 <Cpu size={14} className="text-slate-500" />
-                Structured Technical Report - Project Intel
+                Structured Technical Report • Project Intel
               </div>
 
               <div className="flex justify-between items-start">

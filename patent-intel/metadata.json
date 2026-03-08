@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Patent Intel",
+  "description": "An advanced patent analysis dashboard for inventors and legal professionals, featuring AI-powered novelty assessment, strategy sandboxing, and prior art exploration.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
