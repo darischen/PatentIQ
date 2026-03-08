@@ -1,49 +1,110 @@
-from dotenv import load_dotenv
-from openai import OpenAI
 import psycopg2
-from pgvector.psycopg2 import register_vector
-import os
+from openai import OpenAI
 
-load_dotenv()
+from patentiq.keyword_expansion import expand_keywords
+from patentiq.hybrid_scoring import compute_hybrid_score
+from patentiq.cpc_classifier import suggest_cpc
 
+
+# Initialize OpenAI client
 client = OpenAI()
 
-# Connect to DB
+
+# PostgreSQL connection
 conn = psycopg2.connect(
     dbname="patents",
     user="natashasaini",
-    host="localhost"
+    host="localhost",
+    port="5432"
 )
 
-register_vector(conn)
-cur = conn.cursor()
+cursor = conn.cursor()
 
-query_text = input("Enter search query: ")
 
-# Generate embedding for query
-response = client.embeddings.create(
-    model="text-embedding-3-small",
-    input=query_text
-)
+def generate_embedding(text):
+    """
+    Generate embedding for search query
+    """
 
-query_embedding = response.data[0].embedding
+    response = client.embeddings.create(
+        model="text-embedding-3-small",
+        input=text
+    )
 
-# Single-table vector search
-cur.execute("""
-    SELECT title, abstract
-    FROM patents
-    ORDER BY embedding <=> %s::vector
-    LIMIT 5;
-""", (query_embedding,))
+    return response.data[0].embedding
 
-results = cur.fetchall()
 
-print("\nTop Matches:\n")
+def vector_search(query_embedding, top_k=20):
 
-for r in results:
-    print("Title:", r[0])
-    print("Abstract:", r[1])
-    print("------")
+    vector = "[" + ",".join(map(str, query_embedding)) + "]"
 
-cur.close()
-conn.close()
+    cursor.execute(
+        """
+        SELECT application_number, normalized_text, embedding
+        FROM patents
+        ORDER BY embedding <-> %s::vector
+        LIMIT %s
+        """,
+        (vector, top_k)
+    )
+
+    return cursor.fetchall()
+    
+
+
+def run_search():
+
+    query = input("\nEnter search query: ")
+
+    print("\nStep 1: Keyword Expansion")
+    expanded_keywords = expand_keywords(query)
+    print("Expanded Keywords:", expanded_keywords)
+
+
+    print("\nStep 2: Generating Query Embedding")
+    query_embedding = generate_embedding(query)
+
+
+    print("\nStep 3: Vector Similarity Search")
+    candidates = vector_search(query_embedding)
+
+
+    print("\nStep 4: Hybrid Scoring")
+
+    results = []
+
+    for patent in candidates:
+
+        application_number,text, embedding = patent
+
+        score = compute_hybrid_score(
+            query=query,
+            keywords=expanded_keywords,
+            title=text,
+            abstract=text
+        )
+
+        results.append((score, application_number,text))
+
+
+    results.sort(reverse=True)
+
+
+    print("\nStep 5: CPC Classification Suggestion")
+    cpc_codes = suggest_cpc(query)
+
+    print("Suggested CPC Codes:", cpc_codes)
+
+
+    print("\nTop Patent Matches:\n")
+
+    for score, title, abstract in results[:5]:
+
+        print("Application:", application_number)
+        print("Patent Text:", text[:250])
+        print("Score:", score)
+        print("-" * 60)
+
+
+if __name__ == "__main__":
+    run_search()
