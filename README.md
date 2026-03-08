@@ -10,7 +10,6 @@ AI-powered patent search using <b>semantic embeddings, PostgreSQL, and hybrid ra
 <img src="https://img.shields.io/badge/PostgreSQL-pgvector-green">
 <img src="https://img.shields.io/badge/AI-Semantic%20Search-orange">
 <img src="https://img.shields.io/badge/Docker-Enabled-blue">
-<img src="https://img.shields.io/badge/License-MIT-lightgrey">
 </p>
 
 <hr>
@@ -115,9 +114,10 @@ The system converts patent text and user queries into numerical vectors (embeddi
                 │ Top Matches Displayed       │
                 │ in Terminal Interface       │
                 └─────────────────────────────┘
+
+<img width="1456" height="668" alt="Screenshot 2026-03-08 at 12 26 48 PM" src="https://github.com/user-attachments/assets/8497f7a0-0d2c-4917-81e8-f9bae1b483fc" />
+
 </pre>
-
-
 ## Semantic Patent Search Demo
 
 Example query:
@@ -130,11 +130,6 @@ Pipeline steps:
 - Vector similarity search
 - Hybrid ranking
 - CPC classification suggestion
-
-### Terminal Output
-
-![Semantic Search Demo](images/pipeline_output.png)
-
 
 <hr>
 
