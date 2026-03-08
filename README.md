@@ -117,6 +117,25 @@ The system converts patent text and user queries into numerical vectors (embeddi
                 └─────────────────────────────┘
 </pre>
 
+
+## Semantic Patent Search Demo
+
+Example query:
+detect air pockets in soil
+
+
+Pipeline steps:
+- Keyword expansion
+- Query embedding generation
+- Vector similarity search
+- Hybrid ranking
+- CPC classification suggestion
+
+### Terminal Output
+
+![Semantic Search Demo](images/pipeline_output.png)
+
+
 <hr>
 
 <h2>📂 Project Structure</h2>
