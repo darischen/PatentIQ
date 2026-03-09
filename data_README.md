@@ -1,26 +1,41 @@
-# 🧠 Patent Semantic Search Engine
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
 
-An AI-powered semantic patent search engine using OpenAI embeddings and PostgreSQL with pgvector.
+<h1> Patent Semantic Search Engine</h1>
 
-This project allows users to:
-- Generate embeddings for patent abstracts
-- Store embeddings in PostgreSQL using pgvector
-- Perform semantic similarity search over patents
+<p>
+An AI-powered semantic patent search engine using <b>OpenAI embeddings</b> and 
+<b>PostgreSQL with pgvector</b>.
+</p>
 
----
+<p>This project allows users to:</p>
 
-## 🚀 Tech Stack
+<ul>
+<li>Generate embeddings for patent abstracts</li>
+<li>Store embeddings in PostgreSQL using pgvector</li>
+<li>Perform semantic similarity search over patents</li>
+</ul>
 
-- Python 3.11
-- OpenAI Embeddings (`text-embedding-3-small`)
-- PostgreSQL
-- pgvector
-- psycopg2
+<hr>
 
----
+<h2> Tech Stack</h2>
 
-## 🏗️ Architecture Overview
+<ul>
+<li>Python 3.11</li>
+<li>OpenAI Embeddings (<code>text-embedding-3-small</code>)</li>
+<li>PostgreSQL</li>
+<li>pgvector</li>
+<li>psycopg2</li>
+</ul>
 
+<hr>
+
+<h2>Architecture Overview</h2>
+
+<pre>
 User Query
     ↓
 OpenAI Embedding API
@@ -32,24 +47,32 @@ PostgreSQL + pgvector
 Vector Similarity Search (<->)
     ↓
 Top-K Patent Results
+</pre>
 
----
+<hr>
 
-## 📂 Project Structure
+<h2> Project Structure</h2>
+
+<pre>
 patent-semantic-search/
 │
-├── embed_patents.py # Generates and stores patent embeddings
-├── search_patents.py # Performs semantic similarity search
-├── test_openai.py # Tests embedding API
+├── embed_patents.py      # Generates and stores patent embeddings
+├── search_patents.py     # Performs semantic similarity search
+├── test_openai.py        # Tests embedding API
 ├── requirements.txt
 ├── .gitignore
 └── README.md
+</pre>
 
----
+<hr>
 
-## 🔐 Environment Setup
+<h2>⚙ Environment Setup</h2>
 
-Set your OpenAI key:
+<p>Set your OpenAI API key:</p>
 
-```bash
+<pre><code>
 export OPENAI_API_KEY="your-api-key"
+</code></pre>
+
+</body>
+</html>
