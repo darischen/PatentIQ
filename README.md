@@ -1,5 +1,5 @@
 
-<h1 align="center">🔎 Patent Semantic Search Engine</h1>
+<h1 align="center">Patent Semantic Search Engine</h1>
 
 <p align="center">
 AI-powered patent search using <b>semantic embeddings, PostgreSQL, and hybrid ranking</b>
@@ -14,7 +14,7 @@ AI-powered patent search using <b>semantic embeddings, PostgreSQL, and hybrid ra
 
 <hr>
 
-<h2>📌 Overview</h2>
+<h2>Overview</h2>
 
 <p>
 This project implements a <b>semantic patent search engine</b> that retrieves patents based on meaning rather than exact keywords.
@@ -26,7 +26,7 @@ The system converts patent text and user queries into numerical vectors (embeddi
 
 <hr>
 
-<h2>🚀 Features</h2>
+<h2>Features</h2>
 
 <ul>
 <li>Semantic patent search using vector embeddings</li>
@@ -40,7 +40,7 @@ The system converts patent text and user queries into numerical vectors (embeddi
 
 <hr>
 
-<h2>🏗 System Architecture</h2>
+<h2> System Architecture</h2>
 
 <pre>
                 ┌─────────────────────────────┐
@@ -151,7 +151,7 @@ patent-semantic-search
 
 <hr>
 
-<h2>⚙️ Installation</h2>
+<h2> Installation</h2>
 
 <pre>
 git clone https://github.com/NATASHASAINI/patent-semantic-search.git
@@ -163,7 +163,7 @@ pip install -r requirements.txt
 
 <hr>
 
-<h2>▶️ Run the Patent Search Engine</h2>
+<h2> Run the Patent Search Engine</h2>
 
 <pre>
 python3 search_patents.py
@@ -187,7 +187,7 @@ and non-contact sensors.
 
 <hr>
 
-<h2>🧠 Technologies Used</h2>
+<h2> Technologies Used</h2>
 
 <ul>
 <li>Python</li>
