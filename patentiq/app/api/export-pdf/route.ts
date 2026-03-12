@@ -115,3 +115,76 @@ export async function GET(request: Request) {
         }, { status: 500 });
     }
 }
+
+export async function POST(request: Request) {
+    console.log('>>> [PDF API] POST Route Started');
+
+    try {
+        const body = await request.json();
+        console.log('>>> [PDF API] Received sandbox data');
+
+        // 1. Rate Limit (Enforced)
+        const limitRes = await ratelimit.checkWorkflow('anonymous_pdf_client');
+        if (!limitRes.success) {
+            console.warn(`[PDF API] Rate limit hit: ${limitRes.message}`);
+            return NextResponse.json({ error: limitRes.message }, { status: 429 });
+        }
+
+        // Initialize Audit Workflow Log
+        const logId = await logger.startWorkflow('anonymous_pdf_client', 'Export PDF Action (Sandbox)');
+
+        // Transform sandbox data into record format
+        const record = {
+            title: body.title || 'Patent Strategy Analysis',
+            query_text: body.query_text || body.title || 'Sandbox Analysis',
+            analysis_results: {
+                executive_summary: body.summary || 'This is a strategy sandbox analysis of a patent concept.',
+                overview: body.overview || 'Sandbox configuration analysis',
+                extracted_concepts: body.features?.map((f: any) => f.name) || [],
+                patent_search_queries: [],
+                overlapping_concepts: [],
+                matches: body.matches || [],
+                similarity_analysis_summary: {
+                    high: 0,
+                    medium: 0,
+                    low: 0
+                },
+                risk_assessment: body.riskAssessment || 'Risk assessment pending.',
+                recommendation: {
+                    action: 'PROCEED',
+                    reason: 'Sandbox analysis completed.',
+                    suggested_action: 'Review configuration and refine as needed.'
+                }
+            }
+        };
+
+        // 2. Generate PDF
+        console.log('>>> [PDF API] Calling generatePdfBuffer...');
+        const pdfBuffer = await generatePdfBuffer(record);
+        console.log('>>> [PDF API] PDF Buffer generated size:', pdfBuffer.length);
+
+        await logger.logApiCall({
+            workflowLogId: logId,
+            service: 'App - PDF Generator',
+            endpoint: '/api/export-pdf',
+            requestParams: { source: 'sandbox' },
+            responseStatus: 200,
+            tokenUsage: 0
+        });
+        await logger.endWorkflow(logId, 'completed');
+
+        return new NextResponse(pdfBuffer as unknown as BodyInit, {
+            status: 200,
+            headers: {
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': `attachment; filename="patent-strategy-${Date.now()}.pdf"`,
+            },
+        });
+    } catch (error) {
+        console.error('>>> [PDF API] Error:', error);
+        return NextResponse.json({
+            error: 'Failed to generate PDF',
+            details: error instanceof Error ? error.message : String(error)
+        }, { status: 500 });
+    }
+}

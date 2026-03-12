@@ -38,7 +38,7 @@ df = pd.read_csv(csv_path)
 print(f"Total patents in CSV: {len(df)}")
 
 # Load just first 20 patents for testing
-df = df.head(20)
+df = df.head(5560)
 print(f"Loading first {len(df)} patents into database...")
 
 # Generate embeddings and insert
