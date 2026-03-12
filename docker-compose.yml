@@ -1,6 +1,10 @@
 services:
   db:
+<<<<<<< HEAD
     image: postgres:15-alpine
+=======
+    image: pgvector/pgvector:pg15
+>>>>>>> ranking_generation_recommendation
     container_name: patentiq-postgres
     restart: always
     environment:

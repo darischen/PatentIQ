@@ -1,5 +1,96 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900;
+}
+
+button,
+a,
+[role="button"],
+[role="link"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+label,
+select {
+  @apply cursor-pointer;
+}
+
+.glass-card {
+  @apply bg-white/70 backdrop-blur-md border border-white/50;
+}
+
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-linear-to-br from-slate-800 to-slate-600;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+}
+
+.py-4\.5 {
+  padding-top: 1.125rem;
+  padding-bottom: 1.125rem;
+}
+
+@keyframes fluid-morph {
+  0%, 100% { d: path("M0,0 Q25,25 50,0 T100,0 V100 Q75,75 50,100 T0,100 Z"); }
+  50% { d: path("M0,0 Q20,30 50,10 T100,0 V100 Q80,70 50,90 T0,100 Z"); }
+}
+
+@keyframes drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(10%, 10%) scale(1.1); }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.2); }
+}
+
+@keyframes subtle-zoom {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.1); }
+}
+
+@keyframes loading {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes laser-scan {
+  0% { top: 0%; }
+  50% { top: 100%; }
+  100% { top: 0%; }
+}
+
+@keyframes ping-slow {
+  0% { transform: scale(1); opacity: 1; }
+  75%, 100% { transform: scale(2); opacity: 0; }
+}
+
+@keyframes wave {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

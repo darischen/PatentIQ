@@ -9,15 +9,18 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@auth0/nextjs-auth0": "^3.8.0",
+    "@auth0/nextjs-auth0": "^4.16.0",
     "csv-parse": "^6.1.0",
     "docx": "^9.6.0",
     "lru-cache": "^11.2.6",
+    "lucide-react": "^0.576.0",
     "next": "16.1.6",
+    "openai": "^6.25.0",
     "pdfmake": "^0.3.5",
     "pg": "^8.13.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "recharts": "^3.7.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -29,7 +32,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
-    "tailwindcss": "^4",
+    "tailwindcss": "^4.2.1",
     "typescript": "^5"
   }
 }
