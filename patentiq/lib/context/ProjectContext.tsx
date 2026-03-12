@@ -69,14 +69,12 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const deleteProject = useCallback((id: string) => {
-    setProjects(prev => {
-      const project = prev.find(p => p.id === id);
-      if (project) {
-        setTrash(t => [project, ...t]);
-      }
-      return prev.filter(p => p.id !== id);
-    });
-  }, []);
+    const projectToDelete = projects.find(p => p.id === id);
+    if (projectToDelete) {
+      setTrash(t => [projectToDelete, ...t]);
+      setProjects(prev => prev.filter(p => p.id !== id));
+    }
+  }, [projects]);
 
   const restoreProject = useCallback((id: string) => {
     setTrash(prev => {
@@ -114,11 +112,18 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const updateChatHistory = useCallback((history: ChatMessage[]) => {
     setActiveProject(prev => {
       if (!prev) return prev;
-      const updated = { ...prev, chatHistory: history };
-      setProjects(ps => ps.map(p => p.id === prev.id ? updated : p));
-      return updated;
+      return { ...prev, chatHistory: history };
     });
   }, []);
+
+  // Sync active project chat history to projects list
+  useEffect(() => {
+    if (activeProject) {
+      setProjects(ps => ps.map(p =>
+        p.id === activeProject.id ? { ...p, chatHistory: activeProject.chatHistory } : p
+      ));
+    }
+  }, [activeProject?.chatHistory]);
 
   const renameProject = useCallback((id: string, name: string) => {
     setProjects(prev => prev.map(p => p.id === id ? { ...p, name } : p));

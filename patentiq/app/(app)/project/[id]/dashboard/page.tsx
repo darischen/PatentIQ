@@ -300,7 +300,7 @@ export default function DashboardPage() {
               <div className="text-slate-500 leading-loose text-[16px] font-medium relative z-10 transition-all duration-500 group-hover:blur-[6px] group-hover:opacity-40">
                 The proposed system implements a{' '}
                 {data.features.slice(0, 3).map((feature, i) => (
-                  <React.Fragment key={feature.id}>
+                  <React.Fragment key={feature.id || `feature-${i}`}>
                     <span
                       className={`inline-block px-3 py-0.5 mx-1 rounded-lg font-bold shadow-sm ${getHighlightStyles(
                         feature.status

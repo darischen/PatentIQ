@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { NextResponse } from 'next/server';
 
 // Auth0 handleAuth is not available in the installed version.
@@ -10,18 +9,3 @@ export async function GET() {
 export async function POST() {
   return NextResponse.redirect(new URL('/login', process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'));
 }
-=======
-import { handleAuth } from '@auth0/nextjs-auth0';
-
-const authHandler = handleAuth();
-
-export async function GET(request: Request, props: { params: Promise<any> }) {
-  const params = await props.params;
-  return authHandler(request, { params });
-}
-
-export async function POST(request: Request, props: { params: Promise<any> }) {
-  const params = await props.params;
-  return authHandler(request, { params });
-}
->>>>>>> ranking_generation_recommendation

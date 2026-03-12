@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
 
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json({
-        response:
+        reply:
           "I understand you're describing a technical innovation. Could you elaborate on the specific mechanism or technical advantage that makes your approach different from existing solutions?",
       });
     }
@@ -35,13 +35,13 @@ export async function POST(req: NextRequest) {
     ];
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4o-mini',
       messages,
-      max_tokens: 300,
+      max_tokens: 1000,
     });
 
     return NextResponse.json({
-      response:
+      reply:
         completion.choices[0]?.message?.content || 'Could you elaborate further?',
     });
   } catch (error) {

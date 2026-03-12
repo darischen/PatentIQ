@@ -50,18 +50,24 @@ export default function ProjectWelcomePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const updateChatHistoryLocal = (newHistory: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[])) => {
-    setChatHistory((prev) => {
-      const next = typeof newHistory === 'function' ? newHistory(prev) : newHistory;
-      updateContextHistory(next);
-      return next;
-    });
+    setChatHistory(newHistory);
   };
 
-  // Initialize chat history
+  // Sync local chat history to context
+  useEffect(() => {
+    if (chatHistory.length > 0) {
+      updateContextHistory(chatHistory);
+    }
+  }, [chatHistory, updateContextHistory]);
+
+  // Initialize chat history and analysis
   useEffect(() => {
     if (activeProject?.chatHistory && activeProject.chatHistory.length > 0) {
       setChatHistory(activeProject.chatHistory);
-      setFocusedMode('chat');
+      // Only focus chat if there's NO analysis yet - if analysis exists, show that instead
+      if (!activeProject.analysisResult) {
+        setFocusedMode('chat');
+      }
     } else {
       const initialPrompts: Record<AnalysisType, string> = {
         concept:
@@ -73,6 +79,14 @@ export default function ProjectWelcomePage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeAgent, activeProject?.id]);
+
+  // Initialize analysis data when project loads
+  useEffect(() => {
+    if (activeProject?.analysisResult) {
+      // Analysis already exists, it should be available via context's analysisData
+      // This ensures the dashboard/explorer pages can display previous results
+    }
+  }, [activeProject?.id]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -202,11 +216,16 @@ export default function ProjectWelcomePage() {
 
   // --- Run analysis from chat transcript ---
   const handleStartFinalAnalysis = () => {
+    // If analysis already exists, just navigate to dashboard to view it
+    if (hasExistingAnalysis) {
+      router.push(`/project/${id}/dashboard`);
+      return;
+    }
     const fullTranscript = chatHistory.map((m) => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n');
     callAnalysisAPI(fullTranscript, chatHistory, 'chat');
   };
 
-  const isSatisfied = chatHistory.filter((m) => m.role === 'user').length >= 2 || chatInput.length > 100;
+  const isSatisfied = hasExistingAnalysis || chatHistory.filter((m) => m.role === 'user').length >= 2 || chatInput.length > 100;
 
   return (
     <div className="min-h-screen bg-[#f5f8ff] flex flex-col items-center overflow-x-hidden font-sans">

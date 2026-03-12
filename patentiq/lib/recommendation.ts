@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { sql } from './db';
+import { db } from './db';
 import { PatentResult } from './query_builder';
 
 // Initialize the OpenAI client
@@ -57,16 +57,18 @@ export async function getRecommendations(
 
     // 2. Query Postgres for semantic similarity
     // We compute: 1 - cosine_distance as the similarity score
-    const results = await sql<PatentResult[]>`
-      SELECT 
-        id, 
-        title, 
-        abstract, 
-        1 - (embedding <=> ${vectorString}::vector) AS similarity_score
+    const queryResult = await db.query(
+      `SELECT
+        id,
+        title,
+        abstract,
+        1 - (embedding <=> $1::vector) AS similarity_score
       FROM patents
-      ORDER BY embedding <=> ${vectorString}::vector
-      LIMIT 20; -- Fetch a larger pool to filter down
-    `;
+      ORDER BY embedding <=> $1::vector
+      LIMIT 20`,
+      [vectorString]
+    );
+    const results = queryResult.rows as PatentResult[];
 
     // 3. Filter using the strict recommendation threshold and assign levels
     const filteredAndScored = results

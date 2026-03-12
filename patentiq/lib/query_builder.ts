@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { sql } from './db';
+import { db } from './db';
 import OpenAI from 'openai';
 
 // 1. Initialize the OpenAI client
@@ -103,17 +103,26 @@ export async function rankPatents(
     }
 
     // 3. Combined Query: Vector Similarity + Dynamic Filters
-    const results = await sql<PatentResult[]>`
-      SELECT 
-        id, 
-        title, 
-        abstract, 
-        1 - (embedding <=> ${vectorString}::vector) AS similarity_score
+    let query = `
+      SELECT
+        id,
+        title,
+        abstract,
+        1 - (embedding <=> $1::vector) AS similarity_score
       FROM patents
-      ${whereClause ? sql.unsafe(whereClause) : sql``}
-      ORDER BY embedding <=> ${vectorString}::vector
-      LIMIT ${topK};
     `;
+
+    if (whereClause) {
+      query += whereClause;
+    }
+
+    query += `
+      ORDER BY embedding <=> $1::vector
+      LIMIT ${topK}
+    `;
+
+    const queryResult = await db.query(query, [vectorString]);
+    const results = queryResult.rows as PatentResult[];
 
     return results;
   } catch (error) {

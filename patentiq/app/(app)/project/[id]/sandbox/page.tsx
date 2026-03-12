@@ -48,7 +48,7 @@ export default function SandboxPage() {
 function SandboxContent({ data, id }: { data: AnalysisResult; id: string }) {
   const router = useRouter();
   const [features, setFeatures] = useState<SandboxFeature[]>(
-    data.features.map(f => ({ ...f, enabled: true }))
+    data.features.map((f, idx) => ({ ...f, id: f.id || `feature-${idx}`, enabled: true }))
   );
   const [activeProfile, setActiveProfile] = useState<StrategyProfile>('Balanced');
 
@@ -56,6 +56,12 @@ function SandboxContent({ data, id }: { data: AnalysisResult; id: string }) {
     const activeFeatures = features.filter(f => f.enabled);
     if (activeFeatures.length === 0) return { novelty: 0, confidence: 0 };
 
+    // If all features are enabled, use the original analysis values
+    if (activeFeatures.length === data.features.length) {
+      return { novelty: data.noveltyScore, confidence: data.confidence };
+    }
+
+    // Otherwise, calculate based on enabled features
     const statusWeights: Record<string, number> = {
       'unique': 100,
       'partial': 65,
@@ -68,7 +74,7 @@ function SandboxContent({ data, id }: { data: AnalysisResult; id: string }) {
     const confidence = Math.min(99, Math.round(avgNovelty * 0.85 + (activeFeatures.length * 3)));
 
     return { novelty: avgNovelty, confidence };
-  }, [features]);
+  }, [features, data.noveltyScore, data.confidence, data.features.length]);
 
   const toggleFeature = (featureId: string) => {
     setFeatures(prev => prev.map(f =>
@@ -323,7 +329,19 @@ function SandboxContent({ data, id }: { data: AnalysisResult; id: string }) {
                   </div>
                 </div>
 
-                <button className="bg-white px-6 py-6 rounded-[2rem] shadow-xl flex flex-col items-center group transition-all hover:-translate-y-1 active:scale-95 border border-slate-100">
+                <button
+                  onClick={() => {
+                    const reportText = `Technical Report: ${patentTitle}\n\nActive Features:\n${activeFeatures.map(f => `- ${f.name}: ${f.description}`).join('\n')}\n\nMetrics:\nNovelty: ${metrics.novelty}%\nConfidence: ${metrics.confidence}%`;
+                    const blob = new Blob([reportText], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `patent-report-${id}.txt`;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="bg-white px-6 py-6 rounded-[2rem] shadow-xl flex flex-col items-center group transition-all hover:-translate-y-1 active:scale-95 border border-slate-100 cursor-pointer"
+                >
                   <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mb-2">
                     <FileDown size={18} />
                   </div>

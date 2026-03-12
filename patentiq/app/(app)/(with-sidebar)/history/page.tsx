@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
 import {
   Search,
   Filter,
@@ -12,54 +13,95 @@ import {
   MoreVertical,
   Eye,
 } from 'lucide-react';
-
-const histories = [
-  { id: 'h1', name: 'Quantum Battery Mesh', date: '2 hours ago', novelty: 85, confidence: 92, status: 'Completed', type: 'Concept' },
-  { id: 'h2', name: 'Drone Propeller Optimization', date: 'Yesterday', novelty: 42, confidence: 98, status: 'Completed', type: 'Invalidity' },
-  { id: 'h3', name: 'IoT Edge Node Security', date: '3 days ago', novelty: 91, confidence: 88, status: 'Completed', type: 'FTO' },
-  { id: 'h4', name: 'Bio-mimetic Actuators', date: '1 week ago', novelty: 64, confidence: 95, status: 'Completed', type: 'Concept' },
-  { id: 'h5', name: 'Smart Grid Controller', date: 'Jan 12, 2025', novelty: 22, confidence: 94, status: 'Completed', type: 'Concept' },
-];
+import { useProject } from '@/lib/context/ProjectContext';
 
 export default function HistoryPage() {
+  const { projects } = useProject();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState<string | null>(null);
+
+  // Filter projects with analysis results
+  const analyzedProjects = useMemo(() => {
+    return projects
+      .filter(p => p.analysisResult)
+      .map(p => ({
+        id: p.id,
+        name: p.name,
+        date: p.date,
+        novelty: p.analysisResult?.noveltyScore || 0,
+        confidence: p.analysisResult?.confidence || 0,
+        status: 'Completed' as const,
+        type: 'Analysis' as const,
+      }))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [projects]);
+
+  // Search and filter
+  const filteredHistories = useMemo(() => {
+    return analyzedProjects.filter(h => {
+      const matchesSearch = h.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesType = !filterType || h.type === filterType;
+      return matchesSearch && matchesType;
+    });
+  }, [analyzedProjects, searchQuery, filterType]);
+
+  // Calculate analytics
+  const analytics = useMemo(() => {
+    if (analyzedProjects.length === 0) return { avgNovelty: 0, trend: 0 };
+    const avgNovelty = Math.round(
+      analyzedProjects.reduce((sum, p) => sum + p.novelty, 0) / analyzedProjects.length
+    );
+    const recent = analyzedProjects.slice(0, 3);
+    const older = analyzedProjects.slice(3, 6);
+    const recentAvg = recent.length > 0 ? recent.reduce((sum, p) => sum + p.novelty, 0) / recent.length : 0;
+    const olderAvg = older.length > 0 ? older.reduce((sum, p) => sum + p.novelty, 0) / older.length : 0;
+    const trend = Math.round(recentAvg - olderAvg);
+    return { avgNovelty, trend };
+  }, [analyzedProjects]);
+
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        {/* Header with search and filter */}
-        <div className="flex justify-between items-end">
-          <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Analysis History</h1>
-            <p className="text-slate-500 text-sm font-medium mt-1">
-              Review your past sessions, novelty trends, and strategy exports.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="relative w-64">
-              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search history..."
-                className="w-full bg-white border border-slate-100 rounded-xl py-2.5 pl-11 pr-4 text-xs font-medium focus:ring-2 focus:ring-indigo-100 outline-none"
-              />
-            </div>
-            <button className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-slate-600 shadow-sm transition-all active:scale-95">
-              <Filter size={18} />
-            </button>
-          </div>
+      {/* Header with search and filter */}
+      <div className="flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Analysis History</h1>
+          <p className="text-slate-500 text-sm font-medium mt-1">
+            Review your {analyzedProjects.length} completed analyses and track novelty trends.
+          </p>
         </div>
-
-        {/* Table */}
-        <div className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-100">
-          <div className="grid grid-cols-12 gap-4 px-8 py-6 bg-slate-50/50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            <div className="col-span-4">Analysis Name</div>
-            <div className="col-span-2 text-center">Type</div>
-            <div className="col-span-2 text-center">Novelty Score</div>
-            <div className="col-span-2 text-center">Confidence</div>
-            <div className="col-span-2 text-right">Date / Action</div>
+        <div className="flex items-center gap-3">
+          <div className="relative w-64">
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search history..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white border border-slate-100 rounded-xl py-2.5 pl-11 pr-4 text-xs font-medium focus:ring-2 focus:ring-indigo-100 outline-none"
+            />
           </div>
-          <div className="divide-y divide-slate-50">
-            {histories.map((h) => (
-              <div
+          <button className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-slate-600 shadow-sm transition-all active:scale-95">
+            <Filter size={18} />
+          </button>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-100">
+        <div className="grid grid-cols-12 gap-4 px-8 py-6 bg-slate-50/50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          <div className="col-span-4">Analysis Name</div>
+          <div className="col-span-2 text-center">Type</div>
+          <div className="col-span-2 text-center">Novelty Score</div>
+          <div className="col-span-2 text-center">Confidence</div>
+          <div className="col-span-2 text-right">Date / Action</div>
+        </div>
+        <div className="divide-y divide-slate-50">
+          {filteredHistories.length > 0 ? (
+            filteredHistories.map((h) => (
+              <Link
                 key={h.id}
+                href={`/project/${h.id}`}
                 className="grid grid-cols-12 gap-4 items-center px-8 py-6 hover:bg-slate-50/80 transition-all group cursor-pointer"
               >
                 <div className="col-span-4 flex items-center gap-4">
@@ -110,57 +152,59 @@ export default function HistoryPage() {
                   <div className="text-right">
                     <p className="text-[10px] font-bold text-slate-400">{h.date}</p>
                   </div>
-                  <button className="p-2 text-slate-300 hover:text-indigo-600 transition-colors">
+                  <button
+                    onClick={() => handleViewProject(h.id)}
+                    className="p-2 text-slate-300 hover:text-indigo-600 transition-colors cursor-pointer"
+                    title="View project"
+                  >
                     <Eye size={16} />
                   </button>
-                  <button className="p-2 text-slate-300 hover:text-slate-600 transition-colors">
-                    <MoreVertical size={16} />
-                  </button>
                 </div>
-              </div>
-            ))}
+              </Link>
+            ))
+          ) : (
+            <div className="px-8 py-12 text-center">
+              <p className="text-slate-400 font-medium">
+                {searchQuery ? 'No analyses match your search.' : 'No analyses yet. Run an analysis to see it here.'}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="bg-indigo-600 rounded-[2rem] p-8 text-white flex flex-col justify-between shadow-xl shadow-indigo-100 min-h-[220px]">
+          <div>
+            <TrendingUp size={24} className="mb-6 opacity-60" />
+            <h3 className="text-xl font-black mb-2">Novelty Trends</h3>
+            <p className="text-sm text-indigo-100 font-medium">
+              Your average novelty score is <span className="font-black text-white">{analytics.avgNovelty}%</span>
+              {analytics.trend > 0 ? ` (↑ ${analytics.trend}% improvement)` : analytics.trend < 0 ? ` (↓ ${Math.abs(analytics.trend)}% change)` : ' (stable)'}
+            </p>
           </div>
         </div>
-
-        {/* Bottom cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-indigo-600 rounded-[2rem] p-8 text-white flex flex-col justify-between shadow-xl shadow-indigo-100 min-h-[220px]">
-            <div>
-              <TrendingUp size={24} className="mb-6 opacity-60" />
-              <h3 className="text-xl font-black mb-2">Novelty Trends</h3>
-              <p className="text-sm text-indigo-100 font-medium">
-                Your invention novelty score has increased by 14% this month.
-              </p>
-            </div>
-            <button className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest mt-8">
-              View Analytics <ChevronRight size={14} />
-            </button>
+        <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm flex flex-col justify-between min-h-[220px]">
+          <div>
+            <FileText size={24} className="mb-6 text-slate-300" />
+            <h3 className="text-xl font-black text-slate-800 mb-2">Total Analyses</h3>
+            <p className="text-sm text-slate-400 font-medium">
+              You have completed <span className="font-black text-slate-800">{analyzedProjects.length}</span> {analyzedProjects.length === 1 ? 'analysis' : 'analyses'}.
+            </p>
           </div>
-          <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm flex flex-col justify-between min-h-[220px]">
-            <div>
-              <Calendar size={24} className="mb-6 text-slate-300" />
-              <h3 className="text-xl font-black text-slate-800 mb-2">Scheduled Reviews</h3>
-              <p className="text-sm text-slate-400 font-medium">
-                You have 2 patents pending monthly validation on Jan 28.
-              </p>
-            </div>
-            <button className="flex items-center gap-2 text-[11px] font-black text-indigo-600 uppercase tracking-widest mt-8">
-              Manage Schedule <ChevronRight size={14} />
-            </button>
-          </div>
-          <div className="bg-slate-900 rounded-[2rem] p-8 text-white flex flex-col justify-between min-h-[220px]">
-            <div>
-              <Zap size={24} className="mb-6 text-amber-400" />
-              <h3 className="text-xl font-black mb-2">Model Version</h3>
-              <p className="text-sm text-slate-400 font-medium">
-                Currently using PatentPro Engine v4.2. Update available.
-              </p>
-            </div>
-            <button className="flex items-center gap-2 text-[11px] font-black text-amber-400 uppercase tracking-widest mt-8">
-              Check Updates <ChevronRight size={14} />
-            </button>
+        </div>
+        <div className="bg-slate-900 rounded-[2rem] p-8 text-white flex flex-col justify-between min-h-[220px]">
+          <div>
+            <Zap size={24} className="mb-6 text-amber-400" />
+            <h3 className="text-xl font-black mb-2">Most Recent</h3>
+            <p className="text-sm text-slate-400 font-medium">
+              {analyzedProjects.length > 0
+                ? `Last analyzed: ${analyzedProjects[0].name}`
+                : 'No analyses yet'}
+            </p>
           </div>
         </div>
       </div>
+    </div>
   );
 }

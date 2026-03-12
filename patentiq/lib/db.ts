@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { Pool, PoolConfig } from 'pg';
 
 const poolConfig: PoolConfig = {
@@ -34,12 +33,3 @@ export const db = {
   query: (text: string, params?: any[]) => pool.query(text, params),
   pool,
 };
-=======
-import postgres from 'postgres';
-
-// Grab the connection string we just added to .env.local
-const connectionString = process.env.DATABASE_URL!;
-
-// Create a reusable connection to the database
-export const sql = postgres(connectionString);
->>>>>>> ranking_generation_recommendation

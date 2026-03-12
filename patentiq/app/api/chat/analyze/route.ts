@@ -1,9 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import type { AnalysisResult } from '@/lib/types/project';
+
+// Transform API response to AnalysisResult format
+function transformToAnalysisResult(data: any, analysisType: string = 'concept'): AnalysisResult {
+  return {
+    noveltyScore: data.noveltyScore || data.overallNoveltyScore || 0,
+    confidence: data.confidence || 0,
+    summary: data.contextOverview || data.summary || '',
+    features: (data.features || []).map((f: any, idx: number) => ({
+      id: f.id || `feature-${idx}`,
+      name: f.name || '',
+      status: f.riskLevel === 'high' ? 'high-risk' : f.riskLevel === 'low' ? 'unique' : 'partial',
+      description: f.description || '',
+      domain: f.domain || 'Technical',
+      category: f.category || 'Core' as const,
+    })),
+    topRiskFeature: data.keyRisks?.[0]?.featureName || data.topRiskFeature || '',
+    closestPriorArt: data.features?.[0]?.closestPriorArt?.[0]?.patentNumber || data.closestPriorArt || '',
+    featuresAnalyzed: data.features?.length || 0,
+    similarPatents: (data.features?.reduce((sum: number, f: any) => sum + (f.closestPriorArt?.length || 0), 0)) || 0,
+    analysisType: analysisType as any,
+  };
+}
 
 const DEMO_ANALYSIS = {
   title: 'Patent Novelty Analysis',
-  overallNoveltyScore: 78,
+  noveltyScore: 78,
   confidence: 92,
   features: [
     {
@@ -99,31 +122,32 @@ const DEMO_ANALYSIS = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { transcript } = await req.json();
+    const { content, transcript, projectId, analysisType } = await req.json();
+    const text = content || transcript;
 
-    if (!transcript || typeof transcript !== 'string') {
+    if (!text || typeof text !== 'string') {
       return NextResponse.json(
-        { error: 'Transcript is required' },
+        { error: 'Content or transcript is required' },
         { status: 400 }
       );
     }
 
     if (!process.env.OPENAI_API_KEY) {
       // Return demo analysis data when no API key is configured
-      return NextResponse.json(DEMO_ANALYSIS);
+      return NextResponse.json(transformToAnalysisResult(DEMO_ANALYSIS, analysisType));
     }
 
     const openai = new OpenAI();
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
           content: `You are a patent analysis AI. Given a transcript of an invention description conversation, generate a structured patent novelty analysis. Return valid JSON with this exact structure:
 {
   "title": "string - analysis title",
-  "overallNoveltyScore": number (0-100),
+  "noveltyScore": number (0-100),
   "confidence": number (0-100),
   "features": [
     {
@@ -156,24 +180,24 @@ Analyze the invention thoroughly and provide realistic patent novelty assessment
         },
         {
           role: 'user',
-          content: `Analyze this invention conversation transcript for patent novelty:\n\n${transcript}`,
+          content: `Analyze this invention conversation transcript for patent novelty:\n\n${text}`,
         },
       ],
-      max_tokens: 2000,
+      max_tokens: 5000,
       response_format: { type: 'json_object' },
     });
 
-    const content = completion.choices[0]?.message?.content;
-    if (!content) {
-      return NextResponse.json(DEMO_ANALYSIS);
+    const responseContent = completion.choices[0]?.message?.content;
+    if (!responseContent) {
+      return NextResponse.json(transformToAnalysisResult(DEMO_ANALYSIS, analysisType));
     }
 
     try {
-      const analysisResult = JSON.parse(content);
-      return NextResponse.json(analysisResult);
+      const apiData = JSON.parse(responseContent);
+      return NextResponse.json(transformToAnalysisResult(apiData, analysisType));
     } catch {
       // If parsing fails, return demo data
-      return NextResponse.json(DEMO_ANALYSIS);
+      return NextResponse.json(transformToAnalysisResult(DEMO_ANALYSIS, analysisType));
     }
   } catch (error) {
     console.error('Analysis API error:', error);
