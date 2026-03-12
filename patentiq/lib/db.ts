@@ -24,6 +24,11 @@ if (process.env.NODE_ENV === 'production') {
   pool = (global as any).pgPool;
 }
 
+// Catch idle client errors & connection errors so they don't crash the Node.js process
+pool.on('error', (err, client) => {
+  console.error('[DB Pool] Unexpected error on idle client (ignoring to prevent crash):', err.message);
+});
+
 export const db = {
   query: (text: string, params?: any[]) => pool.query(text, params),
   pool,
