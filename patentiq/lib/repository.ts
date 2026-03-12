@@ -51,6 +51,20 @@ export const patentRepository = {
   },
 
   /**
+   * Retrieves a specific search result by ID (e.g., for PDF export).
+   */
+  async getSearchById(id: string) {
+    console.log(`[DB Lookup] Fetching query by ID: ${id}`);
+    const query = `
+      SELECT id, user_id, query_text, analysis_results, created_at
+      FROM patent_queries
+      WHERE id = $1;
+    `;
+    const result = await db.query(query, [id]);
+    return result.rows[0] || null;
+  },
+
+  /**
    * Checks if a previous search exists for the exact query text to avoid redundant LLM/DB calls.
    */
   async getSearchByQueryText(queryText: string) {
