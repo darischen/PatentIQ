@@ -27,11 +27,9 @@ CREATE TABLE IF NOT EXISTS draft_suggestions (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Indexing e
+-- Indexing
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_patent_queries_user_id ON patent_queries(user_id);
-<<<<<<< HEAD
-=======
 
 -- 1. Enable pgvector extension for similarity search
 CREATE EXTENSION IF NOT EXISTS vector;
@@ -41,10 +39,9 @@ CREATE TABLE IF NOT EXISTS patents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
     abstract TEXT NOT NULL,
-    embedding vector(1536), 
+    embedding vector(1536),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 3. Create an index for faster vector searches
 CREATE INDEX IF NOT EXISTS idx_patents_embedding ON patents USING hnsw (embedding vector_cosine_ops);
->>>>>>> ranking_generation_recommendation

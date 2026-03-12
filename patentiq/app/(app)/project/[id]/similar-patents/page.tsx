@@ -40,75 +40,26 @@ export default function SimilarPatentsPage() {
 
   const [selectedId, setSelectedId] = useState<string>('2');
 
-  const mockPatents: MockPatent[] = [
-    {
-      id: '1',
-      patentId: 'US-2023-0198XA',
-      match: 98,
-      title: 'Decentralized Swarm Logic for Autonomous Drones',
-      assignee: 'AeroTech Dynamics Inc.',
-      tags: ['Drone Logic', 'Mesh Network'],
-      filingDate: 'Nov 14, 2023',
-      abstract: 'A method and system for decentralized swarm logic among a plurality of unmanned aerial vehicles (UAVs). The system utilizes a distributed ledger technology to validate relative coordinates...'
-    },
-    {
-      id: '2',
-      patentId: 'EP-9821-B',
-      match: 94,
-      title: 'Peer-to-Peer Consensus Algorithms in Aerial Vehicles',
-      assignee: 'SkySystems Global',
-      tags: ['Consensus', 'Algorithm'],
-      filingDate: 'Aug 11, 2024',
-      abstract: 'A method and system for decentralized consensus among a plurality of unmanned aerial vehicles (UAVs). The system utilizes a distributed ledger technology to validate relative coordinates and flight paths without a central ground station. This reduces latency in swarm formation adjustments...'
-    },
-    {
-      id: '3',
-      patentId: 'CN-102938-A',
-      match: 76,
-      title: 'Multi-Agent Path Planning for Complex Environments',
-      assignee: 'Beijing Tech Institute',
-      tags: ['Path Planning'],
-      filingDate: 'May 20, 2022',
-      abstract: 'Efficient path planning for multi-agent systems navigating complex obstacles using hierarchical logic and local obstacle avoidance mechanisms.'
-    },
-    {
-      id: '4',
-      patentId: 'US-9982-C',
-      match: 65,
-      title: 'Data Synchronization for Distributed Sensors',
-      assignee: 'Intel Corp.',
-      tags: ['Sensors', 'IoT'],
-      filingDate: 'Mar 12, 2021',
-      abstract: 'A framework for high-frequency data synchronization across distributed sensor nodes in industrial IoT environments.'
-    },
-    {
-      id: '5',
-      patentId: 'JP-2019-555',
-      match: 42,
-      title: 'Remote Control Apparatus for Multiple Toys',
-      assignee: 'Sony Interactive',
-      tags: ['RC Control'],
-      filingDate: 'Sep 01, 2019',
-      abstract: 'Consumer-focused remote control unit capable of managing multiple connected toy drones simultaneously.'
-    },
-    {
-      id: '6',
-      patentId: 'US-8812-A',
-      match: 38,
-      title: 'Swarm Intelligence in Biological Modeling',
-      assignee: 'BioBot Labs',
-      tags: ['Biology', 'Swarm'],
-      filingDate: 'Jan 15, 2020',
-      abstract: 'Algorithms derived from ant-colony behavior applied to virtual modeling of large-scale agent swarms.'
-    }
-  ];
+  // Convert real patents to display format
+  const displayPatents: MockPatent[] = (analysisData?.similarPatentsList || []).map((patent: any, idx: number) => ({
+    id: patent.id || `patent-${idx}`,
+    patentId: patent.id || 'Unknown',
+    match: Math.round((patent.similarity_score || 0) * 100),
+    title: patent.title || 'Unknown Patent',
+    assignee: 'Patent Database',
+    tags: ['Similar Patent'],
+    filingDate: 'Database Record',
+    abstract: patent.abstract || 'No abstract available.',
+  }));
 
-  const selectedPatent = mockPatents.find(p => p.id === selectedId) || mockPatents[1];
+  // Fallback to mock data if no real patents
+  const patents = displayPatents.length > 0 ? displayPatents : [];
+  const selectedPatent = patents.find(p => p.id === selectedId) || patents[0];
 
-  if (!analysisData) {
+  if (!analysisData || !patents || patents.length === 0) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-slate-500 text-sm font-medium">No analysis data. Run an analysis first.</p>
+        <p className="text-slate-500 text-sm font-medium">No analysis data or similar patents found. Run an analysis first.</p>
       </div>
     );
   }
@@ -170,7 +121,7 @@ export default function SimilarPatentsPage() {
 
           {/* Patent Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6 pb-12">
-            {mockPatents.map((patent) => (
+            {patents.map((patent) => (
               <div
                 key={patent.id}
                 onClick={() => setSelectedId(patent.id)}

@@ -10,6 +10,14 @@ export interface PatentFeature {
   category?: 'Core' | 'Secondary' | 'Technical';
 }
 
+export interface SimilarPatent {
+  id: string;
+  title: string;
+  abstract: string;
+  similarity_score: number;
+  reasoning?: string;
+}
+
 export interface AnalysisResult {
   noveltyScore: number;
   confidence: number;
@@ -19,6 +27,7 @@ export interface AnalysisResult {
   closestPriorArt: string;
   featuresAnalyzed: number;
   similarPatents: number;
+  similarPatentsList?: SimilarPatent[];
   analysisType: AnalysisType;
 }
 
