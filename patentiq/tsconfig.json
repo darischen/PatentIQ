@@ -1,15 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-<<<<<<< HEAD
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-=======
     "lib": ["dom", "dom.iterable", "esnext"],
->>>>>>> ranking_generation_recommendation
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -27,16 +19,9 @@
       }
     ],
     "paths": {
-<<<<<<< HEAD
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     },
     "baseUrl": "."
-=======
-      "@/*": ["./*"]
-    }
->>>>>>> ranking_generation_recommendation
   },
   "include": [
     "next-env.d.ts",
@@ -46,12 +31,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-<<<<<<< HEAD
-  "exclude": [
-    "node_modules"
-  ]
-}
-=======
   "exclude": ["node_modules"]
 }
->>>>>>> ranking_generation_recommendation
