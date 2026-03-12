@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "openai": "^6.27.0",
+    "postgres": "^3.4.8"
+  }
+}
