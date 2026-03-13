@@ -25,9 +25,7 @@ interface ProjectContextType {
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export function ProjectProvider({ children }: { children: React.ReactNode }) {
-  const [projects, setProjects] = useState<Project[]>([
-    { id: '1', name: 'Dashboard Download Page', date: '2 days ago' }
-  ]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [trash, setTrash] = useState<Project[]>([]);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [analysisData, setAnalysisDataState] = useState<AnalysisResult | null>(null);

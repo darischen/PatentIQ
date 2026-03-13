@@ -12,6 +12,7 @@ export interface PatentFeature {
 
 export interface SimilarPatent {
   id: string;
+  application_number?: string;
   title: string;
   abstract: string;
   similarity_score: number;

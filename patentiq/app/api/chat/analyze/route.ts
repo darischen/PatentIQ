@@ -17,7 +17,7 @@ async function transformRealPatentsToAnalysis(
   analysisType: string = 'concept'
 ): Promise<AnalysisResult> {
   // Extract top patent as closest prior art
-  const closestPriorArt = realPatents[0]?.id || realPatents[0]?.patent_id || '';
+  const closestPriorArt = realPatents[0]?.application_number || realPatents[0]?.id || realPatents[0]?.patent_id || '';
 
   // Use OpenAI to analyze the user's input and extract features
   const completion = await openai.chat.completions.create({
@@ -57,6 +57,7 @@ async function transformRealPatentsToAnalysis(
   // Map real patents to SimilarPatent format
   const similarPatentsList = realPatents.map((patent: any) => ({
     id: patent.id || patent.patent_id || '',
+    application_number: patent.application_number || '',
     title: patent.title || 'Unknown Patent',
     abstract: patent.abstract || '',
     similarity_score: patent.similarity_score || 0,
@@ -99,7 +100,7 @@ export async function POST(req: NextRequest) {
 
     // 1. Search database for REAL similar patents using vector ranking
     console.log('[Analyze API] Searching for real patents...');
-    let realPatents = [];
+    let realPatents: any[] = [];
 
     try {
       realPatents = await rankPatents(text, 5); // Get top 5 real patents

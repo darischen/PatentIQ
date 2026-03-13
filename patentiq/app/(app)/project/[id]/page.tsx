@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   Search, FileText, Upload, ArrowRight, Grid, MessageSquare,
   Sparkles, X, AlertTriangle, RefreshCw, Loader2, CloudUpload,
-  BrainCircuit, PlayCircle, Eye, Zap
+  BrainCircuit, Eye, Zap
 } from 'lucide-react';
 import { useProject } from '@/lib/context/ProjectContext';
 import type { AnalysisResult, AnalysisType, ChatMessage } from '@/lib/types/project';
@@ -92,30 +92,6 @@ export default function ProjectWelcomePage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatHistory]);
 
-  // --- Demo data ---
-  const handleLoadDemo = () => {
-    const demoData: AnalysisResult = {
-      noveltyScore: 82,
-      confidence: 94,
-      summary:
-        'A revolutionary decentralized coordination system for autonomous agents using high-frequency mesh synchronization and ledger-based location verification. This enables swarms to operate without a central authority while maintaining sub-10ms latency for safety-critical tasks.',
-      features: [
-        { id: '1', name: 'Ledger-based positioning', status: 'high-risk', description: 'Blockchain-like verification for node coordinates', domain: 'Security', category: 'Core' },
-        { id: '2', name: 'Hybrid Sensor Fusion', status: 'unique', description: 'Real-time merging of LIDAR and Radar logic', domain: 'Sensors', category: 'Core' },
-        { id: '3', name: 'Low-latency Data Bus', status: 'partial', description: '5GHz synchronized communication backplane', domain: 'Hardware', category: 'Technical' },
-        { id: '4', name: 'Neural Path Predictor', status: 'unique', description: 'RNN-based obstacle trajectory estimation', domain: 'Processing', category: 'Secondary' },
-        { id: '5', name: 'Bio-mimetic Swarm Logic', status: 'unique', description: 'Organic flight patterns for drag reduction', domain: 'Control', category: 'Secondary' },
-      ],
-      topRiskFeature: 'Ledger-based positioning',
-      closestPriorArt: 'US-9,821,445-B2',
-      featuresAnalyzed: 14,
-      similarPatents: 128,
-      analysisType: activeAgent,
-    };
-    updateProjectAnalysis(demoData, chatHistory);
-    router.push(`/project/${id}/dashboard`);
-  };
-
   // --- Chat submit via API ---
   const handleChatSubmit = async () => {
     if (chatInput.trim().length < 2 || isChatLoading) return;
@@ -143,7 +119,7 @@ export default function ProjectWelcomePage() {
       console.error('Chat error:', err);
       updateChatHistoryLocal((prev) => [
         ...prev,
-        { role: 'bot', content: 'Communication error. The chat API is not available yet. Please use Demo Mode to preview the dashboard.' },
+        { role: 'bot', content: 'Communication error. Please try again.' },
       ]);
     } finally {
       setIsChatLoading(false);
@@ -172,8 +148,7 @@ export default function ProjectWelcomePage() {
     } catch (err: unknown) {
       console.error('AI Analysis Error:', err);
       setError({
-        message:
-          'The analysis API is not available yet. Use "Simulate (Demo)" to preview the dashboard with sample data.',
+        message: 'Analysis failed. Please try again later.',
         isQuota: false,
       });
     } finally {
@@ -447,19 +422,12 @@ export default function ProjectWelcomePage() {
                 </span>
               </div>
               <div className="flex items-center gap-3">
-                {hasExistingAnalysis ? (
+                {hasExistingAnalysis && (
                   <button
                     onClick={() => router.push(`/project/${id}/dashboard`)}
                     className="text-slate-500 px-5 py-3 rounded-full flex items-center gap-2 hover:bg-slate-50 transition-all text-xs font-bold border border-slate-200"
                   >
                     <Eye size={14} className="text-slate-400" /> Go Back to Baseline Summary
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleLoadDemo}
-                    className="text-slate-500 px-5 py-3 rounded-full flex items-center gap-2 hover:bg-slate-50 transition-all text-xs font-bold border border-slate-200"
-                  >
-                    <Eye size={14} className="text-slate-400" /> Simulate (Demo)
                   </button>
                 )}
                 <button
@@ -599,10 +567,10 @@ export default function ProjectWelcomePage() {
 
           <div className="flex flex-col sm:flex-row gap-3">
             <button
-              onClick={handleLoadDemo}
-              className="flex-1 bg-blue-500 text-white px-6 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-100"
+              onClick={() => setError(null)}
+              className="flex-1 bg-slate-500 text-white px-6 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-100"
             >
-              <PlayCircle size={14} /> Bypass to Dashboard (Demo)
+              Dismiss
             </button>
           </div>
         </div>

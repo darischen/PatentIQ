@@ -8,17 +8,13 @@ import {
   Filter,
   X,
   Bookmark,
-  ExternalLink,
   AlertTriangle,
   FileText,
   Target,
   Zap,
   ArrowRight,
   ShieldAlert,
-  Hash,
-  Building2,
-  CalendarDays,
-  Globe
+  Hash
 } from 'lucide-react';
 import { useProject } from '@/lib/context/ProjectContext';
 
@@ -27,10 +23,9 @@ interface MockPatent {
   patentId: string;
   match: number;
   title: string;
-  assignee: string;
   tags: string[];
-  filingDate: string;
   abstract: string;
+  reasoning: string;
 }
 
 export default function SimilarPatentsPage() {
@@ -43,13 +38,12 @@ export default function SimilarPatentsPage() {
   // Convert real patents to display format
   const displayPatents: MockPatent[] = (analysisData?.similarPatentsList || []).map((patent: any, idx: number) => ({
     id: patent.id || `patent-${idx}`,
-    patentId: patent.id || 'Unknown',
+    patentId: patent.application_number || patent.id || 'Unknown',
     match: Math.round((patent.similarity_score || 0) * 100),
     title: patent.title || 'Unknown Patent',
-    assignee: 'Patent Database',
     tags: ['Similar Patent'],
-    filingDate: 'Database Record',
     abstract: patent.abstract || 'No abstract available.',
+    reasoning: patent.reasoning || '',
   }));
 
   // Fallback to mock data if no real patents
@@ -156,10 +150,6 @@ export default function SimilarPatentsPage() {
                   <h3 className="text-[19px] font-black text-slate-900 leading-[1.2] mb-3 group-hover:text-indigo-600 transition-colors tracking-tight">
                     {patent.title}
                   </h3>
-                  <div className="flex items-center gap-2 text-[12px] text-slate-400 font-bold mb-8">
-                    <Building2 size={12} className="text-slate-300" /> {patent.assignee}
-                  </div>
-
                   <div className="flex flex-wrap gap-2 mb-8">
                     {patent.tags.map(tag => (
                       <span key={tag} className="bg-indigo-50/50 text-indigo-500 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border border-indigo-100/30">
@@ -217,54 +207,37 @@ export default function SimilarPatentsPage() {
                 {selectedPatent.title}
               </h2>
 
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2 text-slate-400">
-                  <Building2 size={14} />
-                  <span className="text-[12px] font-black text-slate-600 uppercase tracking-tight">{selectedPatent.assignee}</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-400">
-                  <CalendarDays size={14} />
-                  <span className="text-[12px] font-black text-slate-600 uppercase tracking-tight">{selectedPatent.filingDate}</span>
-                </div>
-              </div>
             </div>
           </div>
 
           <div className="px-10 flex-1 overflow-y-auto custom-scrollbar pb-10 space-y-12">
-            {/* Score Highlight Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-50/50 rounded-[2rem] p-6 border border-slate-100 flex flex-col justify-between h-[120px]">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Docket Status</p>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <p className="text-[16px] font-black text-slate-800">Granted Patent</p>
-                </div>
-              </div>
-              <div className="bg-slate-50/50 rounded-[2rem] p-6 border border-slate-100 flex flex-col justify-between h-[120px]">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Jurisdiction</p>
-                <div className="flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-slate-400" />
-                  <p className="text-[16px] font-black text-slate-800">US-Federal</p>
-                </div>
-              </div>
-            </div>
-
             {/* Critical Overlap Zone */}
-            <div className="bg-[#fef2f2] rounded-[2.5rem] p-8 border border-rose-100 relative overflow-hidden group/risk">
-              <div className="absolute -right-8 -bottom-8 text-rose-500/5 group-hover/risk:scale-110 transition-transform duration-700">
-                <ShieldAlert size={160} />
-              </div>
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3 text-rose-600">
-                  <AlertTriangle size={20} className="animate-pulse" />
-                  <span className="text-[12px] font-black uppercase tracking-[0.2em]">Risk Exposure Map</span>
+            {(() => {
+              const riskLevel = selectedPatent.match > 85 ? 'High' : selectedPatent.match > 60 ? 'Medium' : 'Low';
+              const riskColors = {
+                High: { bg: 'bg-[#fef2f2]', border: 'border-rose-100', icon: 'text-rose-500/5', text: 'text-rose-600', label: 'text-rose-500 border-rose-100/50', body: 'text-rose-950' },
+                Medium: { bg: 'bg-amber-50', border: 'border-amber-100', icon: 'text-amber-500/5', text: 'text-amber-600', label: 'text-amber-500 border-amber-100/50', body: 'text-amber-950' },
+                Low: { bg: 'bg-emerald-50', border: 'border-emerald-100', icon: 'text-emerald-500/5', text: 'text-emerald-600', label: 'text-emerald-500 border-emerald-100/50', body: 'text-emerald-950' },
+              };
+              const colors = riskColors[riskLevel];
+              return (
+                <div className={`${colors.bg} rounded-[2.5rem] p-8 border ${colors.border} relative overflow-hidden group/risk`}>
+                  <div className={`absolute -right-8 -bottom-8 ${colors.icon} group-hover/risk:scale-110 transition-transform duration-700`}>
+                    <ShieldAlert size={160} />
+                  </div>
+                  <div className="flex items-center justify-between mb-6">
+                    <div className={`flex items-center gap-3 ${colors.text}`}>
+                      <AlertTriangle size={20} className={riskLevel === 'High' ? 'animate-pulse' : ''} />
+                      <span className="text-[12px] font-black uppercase tracking-[0.2em]">Risk Exposure Map</span>
+                    </div>
+                    <span className={`bg-white/60 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${colors.label}`}>Level: {riskLevel}</span>
+                  </div>
+                  <p className={`text-[15px] ${colors.body} font-semibold leading-[1.6] relative z-10`}>
+                    {selectedPatent.reasoning || 'No risk reasoning available for this patent. Run a new analysis to generate detailed overlap insights.'}
+                  </p>
                 </div>
-                <span className="bg-white/60 px-3 py-1 rounded-full text-[9px] font-black text-rose-500 uppercase tracking-widest border border-rose-100/50">Level: High</span>
-              </div>
-              <p className="text-[15px] text-rose-950 font-semibold leading-[1.6] relative z-10">
-                Claims 14-18 regarding <span className="text-rose-900 font-black underline decoration-rose-300 decoration-2 underline-offset-4 tracking-tight italic">"decentralized mesh synchronization for swarm logic"</span> directly mirror your primary innovation block.
-              </p>
-            </div>
+              );
+            })()}
 
             {/* Detailed Abstract Section */}
             <div className="space-y-6">

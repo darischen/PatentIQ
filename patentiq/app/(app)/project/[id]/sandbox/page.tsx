@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { useProject } from '@/lib/context/ProjectContext';
+import { ExportReportMenu } from '@/components/ExportReportMenu';
 import type { PatentFeature, AnalysisResult } from '@/lib/types/project';
 
 interface SandboxFeature extends PatentFeature {
@@ -329,24 +330,15 @@ function SandboxContent({ data, id }: { data: AnalysisResult; id: string }) {
                   </div>
                 </div>
 
-                <button
-                  onClick={() => {
-                    const reportText = `Technical Report: ${patentTitle}\n\nActive Features:\n${activeFeatures.map(f => `- ${f.name}: ${f.description}`).join('\n')}\n\nMetrics:\nNovelty: ${metrics.novelty}%\nConfidence: ${metrics.confidence}%`;
-                    const blob = new Blob([reportText], { type: 'text/plain' });
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = `patent-report-${id}.txt`;
-                    link.click();
-                    URL.revokeObjectURL(url);
-                  }}
-                  className="bg-white px-6 py-6 rounded-[2rem] shadow-xl flex flex-col items-center group transition-all hover:-translate-y-1 active:scale-95 border border-slate-100 cursor-pointer"
-                >
-                  <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mb-2">
-                    <FileDown size={18} />
+                <div className="flex flex-col items-end gap-3">
+                  <div className="bg-white px-6 py-6 rounded-[2rem] shadow-xl flex flex-col items-center border border-slate-100">
+                    <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mb-2">
+                      <FileDown size={18} />
+                    </div>
+                    <p className="text-[10px] font-black text-slate-800 uppercase tracking-tighter">Export</p>
                   </div>
-                  <p className="text-[10px] font-black text-slate-800 uppercase tracking-tighter">Export</p>
-                </button>
+                  <ExportReportMenu queryId={id} />
+                </div>
               </div>
             </div>
 

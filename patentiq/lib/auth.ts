@@ -1,8 +1,10 @@
-// Auth0 getSession is not available in the installed version.
-// Stubbed out to allow the build to pass. Replace with real auth when ready.
+// Auth0 integration ready — uncomment below and remove mock when Auth0 callback URLs are configured.
+// import { auth0 } from './auth0';
 
 export async function getAuthUser() {
-  // Return a mock user for development
+  // Mock user for development — replace with Auth0 when ready:
+  // const session = await auth0.getSession();
+  // return session?.user;
   return {
     sub: 'mock-user-id',
     name: 'Johnathan Inventor',

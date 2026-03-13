@@ -21,11 +21,6 @@ import {
   Pie,
   Cell,
   ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip as RechartsTooltip
 } from 'recharts';
 
 export default function ConfidencePage() {
@@ -57,20 +52,31 @@ export default function ConfidencePage() {
     { name: 'Remaining', value: 100 - data.confidence },
   ];
 
-  const historyData = [
-    { time: '10:00', score: 82 },
-    { time: '10:15', score: 85 },
-    { time: '10:30', score: 84 },
-    { time: '10:45', score: 89 },
-    { time: '11:00', score: 91 },
-    { time: '11:15', score: 92.4 },
-  ];
-
   const factors = [
-    { name: 'Feature-Claim Alignment', score: 96, desc: 'Semantic overlap with invention disclosure', color: '#0f172a' },
-    { name: 'Prior Art Coverage', score: 88, desc: 'Breadth of databases scanned (US, EP, JP, CN)', color: '#f59e0b' },
-    { name: 'Data Quality Score', score: 91, desc: 'Clarity and completeness of input text', color: '#10b981' },
-    { name: 'Citation Density', score: 74, desc: 'Relevance of cited references in similar art', color: '#ef4444' },
+    {
+      name: 'Feature-Claim Alignment',
+      score: data.noveltyScore,
+      desc: 'Semantic overlap with invention disclosure',
+      color: '#0f172a'
+    },
+    {
+      name: 'Prior Art Coverage',
+      score: Math.min(100, 60 + (data.similarPatents * 8)),
+      desc: 'Breadth of databases scanned (US, EP, JP, CN)',
+      color: '#f59e0b'
+    },
+    {
+      name: 'Data Quality Score',
+      score: data.confidence,
+      desc: 'Clarity and completeness of input text',
+      color: '#10b981'
+    },
+    {
+      name: 'Citation Density',
+      score: Math.min(100, Math.round((data.featuresAnalyzed / 8) * 100)),
+      desc: 'Relevance of cited references in similar art',
+      color: '#ef4444'
+    },
   ];
 
   return (
@@ -217,56 +223,8 @@ export default function ConfidencePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-12 gap-8 h-[360px]">
-            {/* History Sparkline */}
-            <div className="col-span-12 lg:col-span-7 bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm flex flex-col">
-              <div className="flex justify-between items-center mb-8">
-                <h3 className="text-base font-black text-slate-900">Confidence History</h3>
-                <div className="bg-slate-50 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-400 border border-slate-100">
-                  Last 1 Hour <ChevronRight size={10} className="inline ml-1" />
-                </div>
-              </div>
-
-              <div className="flex-1 min-h-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={historyData}>
-                    <XAxis
-                      dataKey="time"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 700 }}
-                      padding={{ left: 10, right: 10 }}
-                    />
-                    <YAxis hide domain={['dataMin - 5', 'dataMax + 5']} />
-                    <RechartsTooltip
-                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 20px rgba(0,0,0,0.05)', fontSize: '12px' }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="score"
-                      stroke="#6366f1"
-                      strokeWidth={4}
-                      dot={{ r: 4, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }}
-                      activeDot={{ r: 6, strokeWidth: 0 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="flex justify-between items-center mt-6 pt-6 border-t border-slate-50">
-                <div>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Start</p>
-                  <p className="text-sm font-black text-slate-800">82%</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 text-emerald-500">Peak</p>
-                  <p className="text-sm font-black text-emerald-500">94.1%</p>
-                </div>
-              </div>
-            </div>
-
-            {/* AI Recommendation Card */}
-            <div className="col-span-12 lg:col-span-5 bg-[#1e293b] rounded-[2rem] p-8 text-white flex flex-col justify-between shadow-2xl relative overflow-hidden group">
+          {/* AI Recommendation Card */}
+          <div className="bg-[#1e293b] rounded-[2rem] p-8 text-white flex flex-col justify-between shadow-2xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -mr-10 -mt-10" />
 
               <div>
@@ -274,21 +232,21 @@ export default function ConfidencePage() {
                   <div className="w-8 h-8 bg-amber-400 text-slate-900 rounded-lg flex items-center justify-center">
                     <Sparkles size={16} fill="currentColor" />
                   </div>
-                  <h3 className="text-[13px] font-black uppercase tracking-[0.15em]">AI Recommendation</h3>
+                  <h3 className="text-[13px] font-black uppercase tracking-[0.15em]">Analysis Summary</h3>
                 </div>
 
                 <p className="text-[15px] font-medium leading-relaxed text-slate-300">
-                  To increase confidence to <span className="text-white font-black">{'>'}95%</span>, consider elaborating on the <span className="text-white font-black underline decoration-indigo-400 underline-offset-4">"Swarm Logic Coordination"</span> section specifically regarding latency handling.
+                  Analysis shows {data.confidence}% confidence with {data.featuresAnalyzed} features analyzed across {data.similarPatents} similar patents.
+                  {data.confidence < 85 ? ' Consider refining your description to improve confidence scores.' : ' Strong alignment with prior art indicates solid novelty positioning.'}
                 </p>
               </div>
 
-              <button className="w-full bg-white text-slate-900 py-4 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-indigo-50 transition-all group-hover:shadow-xl active:scale-[0.98]">
-                <Wand2 size={16} className="text-indigo-600" /> Auto-Refine Description
+              <button className="w-full bg-white text-slate-900 py-4 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-indigo-50 transition-all group-hover:shadow-xl active:scale-[0.98]" onClick={() => router.push(`/project/${id}/dashboard`)}>
+                <Wand2 size={16} className="text-indigo-600" /> Back to Analysis
               </button>
             </div>
           </div>
         </div>
       </div>
-    </div>
   );
 }
