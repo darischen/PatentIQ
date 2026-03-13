@@ -6,14 +6,17 @@ import { Grid, EyeOff, Layout, FileText, BarChart3, Settings as SettingsIcon, Pl
 
 export default function LoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleAuth0Login = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username && email && password) {
-      router.push('/projects');
+    setIsLoading(true);
+    try {
+      // Redirect to Auth0 login endpoint
+      window.location.href = '/api/auth/login';
+    } catch (error) {
+      console.error('Login error:', error);
+      setIsLoading(false);
     }
   };
 
@@ -36,67 +39,23 @@ export default function LoginPage() {
 
             <div className="max-w-md">
               <h1 className="text-3xl font-bold text-[#1e293b] mb-2">Login to Dashboard</h1>
-              <p className="text-slate-500 mb-12">Fill the below form to login</p>
+              <p className="text-slate-500 mb-12">Secure authentication powered by Auth0</p>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-[#1e293b]">Username</label>
-                  <div className="relative">
-                    <input
-                      required
-                      type="text"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Enter your username"
-                      className="w-full bg-white border border-slate-200 rounded-xl py-4 px-5 text-sm text-slate-900 focus:ring-2 focus:ring-purple-100 focus:border-purple-400 outline-none transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-[#1e293b]">Email</label>
-                  <div className="relative">
-                    <input
-                      required
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter email address"
-                      className="w-full bg-white border border-slate-200 rounded-xl py-4 px-5 text-sm text-slate-900 focus:ring-2 focus:ring-purple-100 focus:border-purple-400 outline-none transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <label className="text-sm font-bold text-[#1e293b]">Password</label>
-                  </div>
-                  <div className="relative">
-                    <input
-                      required
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter Password"
-                      className="w-full bg-white border border-slate-200 rounded-xl py-4 px-5 pr-12 text-sm text-slate-900 focus:ring-2 focus:ring-purple-100 focus:border-purple-400 outline-none transition-all"
-                    />
-                    <EyeOff className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 cursor-pointer hover:text-slate-400" size={18} />
-                  </div>
-                </div>
-
-                <div className="flex justify-start">
-                  <button type="button" className="text-sm font-bold text-[#7c3aed] hover:underline transition-all">
-                    Forget Password?
-                  </button>
-                </div>
-
+              <form onSubmit={handleAuth0Login} className="space-y-6">
                 <button
                   type="submit"
-                  className="w-full bg-[#7c3aed] text-white py-4 rounded-xl font-bold text-base hover:bg-[#6d28d9] transition-all shadow-xl shadow-purple-100 active:scale-[0.99] mt-4"
+                  disabled={isLoading}
+                  className="w-full bg-[#7c3aed] text-white py-4 rounded-xl font-bold text-base hover:bg-[#6d28d9] disabled:bg-[#8b5cf6] disabled:cursor-not-allowed transition-all shadow-xl shadow-purple-100 active:scale-[0.99] mt-4"
                 >
-                  Login
+                  {isLoading ? 'Redirecting to Auth0...' : 'Login with Auth0'}
                 </button>
               </form>
+
+              <div className="mt-8 pt-8 border-t border-slate-200">
+                <p className="text-xs text-slate-400 text-center">
+                  This application uses Auth0 for secure authentication. Your credentials are protected by industry-standard security practices.
+                </p>
+              </div>
             </div>
           </div>
 
