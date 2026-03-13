@@ -83,6 +83,14 @@ def parse_uspto_xml(file_path):
             extracted_data['abstract'] = safe_get_all_text(elem, './/abstract/p')
             extracted_data['claims'] = safe_get_all_text(elem, './/claims/claim')
             
+            # Status Detection
+            if elem.tag == 'us-patent-grant':
+                extracted_data['grant_status'] = 'granted'
+            elif elem.tag == 'us-patent-application':
+                extracted_data['grant_status'] = 'applied'
+            else:
+                extracted_data['grant_status'] = 'pending'
+            
             # Inventors
             inventors = []
             for inv in elem.xpath('.//inventors/inventor | .//inventor'):

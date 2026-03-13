@@ -17,7 +17,10 @@ export async function generatePdfBuffer(searchRecord: any): Promise<Buffer> {
         }
     };
 
-    const printer = new PdfPrinter(fontDescriptors);
+    const printer = new PdfPrinter(fontDescriptors, null, {
+        resolve: () => {},
+        resolved: () => Promise.resolve()
+    });
 
     const { query_text, analysis_results } = searchRecord;
 
