@@ -153,7 +153,6 @@ export default function HistoryPage() {
                     <p className="text-[10px] font-bold text-slate-400">{h.date}</p>
                   </div>
                   <button
-                    onClick={() => handleViewProject(h.id)}
                     className="p-2 text-slate-300 hover:text-indigo-600 transition-colors cursor-pointer"
                     title="View project"
                   >

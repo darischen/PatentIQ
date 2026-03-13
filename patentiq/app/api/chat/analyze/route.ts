@@ -1,124 +1,90 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import type { AnalysisResult } from '@/lib/types/project';
+import { rankPatents } from '@/lib/query_builder';
+import { generateRankingReasoning } from '@/lib/reasoning';
+import { getRecommendations } from '@/lib/recommendation';
+import { rankAndExplain } from '@/lib/ranking_engine';
 
-// Transform API response to AnalysisResult format
-function transformToAnalysisResult(data: any, analysisType: string = 'concept'): AnalysisResult {
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// Transform real patent search results to AnalysisResult format
+async function transformRealPatentsToAnalysis(
+  userInput: string,
+  realPatents: any[],
+  analysisType: string = 'concept'
+): Promise<AnalysisResult> {
+  // Extract top patent as closest prior art
+  const closestPriorArt = realPatents[0]?.application_number || realPatents[0]?.id || realPatents[0]?.patent_id || '';
+
+  // Use OpenAI to analyze the user's input and extract features
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      {
+        role: 'system',
+        content: `You are a patent analysis AI. Analyze the invention description and extract key technical features. Return valid JSON with this structure:
+{
+  "title": "string - brief invention title",
+  "features": [
+    {
+      "name": "string - feature name",
+      "description": "string - what it does",
+      "domain": "string - technical domain",
+      "riskLevel": "low" | "medium" | "high"
+    }
+  ],
+  "noveltyScore": number (0-100),
+  "confidence": number (0-100),
+  "contextOverview": "string - 2-3 sentence summary"
+}`,
+      },
+      {
+        role: 'user',
+        content: `Analyze this invention: ${userInput}`,
+      },
+    ],
+    max_tokens: 2000,
+    response_format: { type: 'json_object' },
+  });
+
+  const analysisData = JSON.parse(
+    completion.choices[0]?.message?.content || '{}'
+  );
+
+  // Map real patents to SimilarPatent format
+  const similarPatentsList = realPatents.map((patent: any) => ({
+    id: patent.id || patent.patent_id || '',
+    application_number: patent.application_number || '',
+    title: patent.title || 'Unknown Patent',
+    abstract: patent.abstract || '',
+    similarity_score: patent.similarity_score || 0,
+    reasoning: patent.reasoning || '',
+  }));
+
   return {
-    noveltyScore: data.noveltyScore || data.overallNoveltyScore || 0,
-    confidence: data.confidence || 0,
-    summary: data.contextOverview || data.summary || '',
-    features: (data.features || []).map((f: any, idx: number) => ({
-      id: f.id || `feature-${idx}`,
+    noveltyScore: analysisData.noveltyScore || 70,
+    confidence: analysisData.confidence || 85,
+    summary: analysisData.contextOverview || 'Patent analysis completed.',
+    features: (analysisData.features || []).map((f: any, idx: number) => ({
+      id: `feature-${idx}`,
       name: f.name || '',
       status: f.riskLevel === 'high' ? 'high-risk' : f.riskLevel === 'low' ? 'unique' : 'partial',
       description: f.description || '',
       domain: f.domain || 'Technical',
-      category: f.category || 'Core' as const,
+      category: idx === 0 ? ('Core' as const) : ('Technical' as const),
     })),
-    topRiskFeature: data.keyRisks?.[0]?.featureName || data.topRiskFeature || '',
-    closestPriorArt: data.features?.[0]?.closestPriorArt?.[0]?.patentNumber || data.closestPriorArt || '',
-    featuresAnalyzed: data.features?.length || 0,
-    similarPatents: (data.features?.reduce((sum: number, f: any) => sum + (f.closestPriorArt?.length || 0), 0)) || 0,
+    topRiskFeature: analysisData.features?.[0]?.name || 'Technical Implementation',
+    closestPriorArt: closestPriorArt,
+    featuresAnalyzed: analysisData.features?.length || 3,
+    similarPatents: realPatents.length,
+    similarPatentsList: similarPatentsList,
     analysisType: analysisType as any,
   };
 }
 
-const DEMO_ANALYSIS = {
-  title: 'Patent Novelty Analysis',
-  noveltyScore: 78,
-  confidence: 92,
-  features: [
-    {
-      name: 'Core Innovation Mechanism',
-      noveltyScore: 85,
-      riskLevel: 'low' as const,
-      description:
-        'The primary technical mechanism demonstrates strong novelty with limited overlap in existing patent literature.',
-      closestPriorArt: [
-        {
-          patentNumber: 'US10,234,567',
-          title: 'Related Technical Approach',
-          overlapPercentage: 23,
-        },
-      ],
-    },
-    {
-      name: 'Implementation Architecture',
-      noveltyScore: 72,
-      riskLevel: 'medium' as const,
-      description:
-        'The system architecture shows moderate novelty. Some structural similarities exist with prior art.',
-      closestPriorArt: [
-        {
-          patentNumber: 'US9,876,543',
-          title: 'Similar Architecture Pattern',
-          overlapPercentage: 41,
-        },
-        {
-          patentNumber: 'US10,111,222',
-          title: 'Comparable System Design',
-          overlapPercentage: 35,
-        },
-      ],
-    },
-    {
-      name: 'Data Processing Pipeline',
-      noveltyScore: 91,
-      riskLevel: 'low' as const,
-      description:
-        'The data processing approach is highly novel with minimal prior art overlap.',
-      closestPriorArt: [
-        {
-          patentNumber: 'US10,333,444',
-          title: 'Data Handling Method',
-          overlapPercentage: 12,
-        },
-      ],
-    },
-    {
-      name: 'User Interface Method',
-      noveltyScore: 45,
-      riskLevel: 'high' as const,
-      description:
-        'The UI interaction pattern has significant overlap with existing patents. Consider alternative approaches.',
-      closestPriorArt: [
-        {
-          patentNumber: 'US9,555,666',
-          title: 'Interactive Display System',
-          overlapPercentage: 67,
-        },
-        {
-          patentNumber: 'US10,777,888',
-          title: 'User Interface Method',
-          overlapPercentage: 54,
-        },
-      ],
-    },
-  ],
-  keyRisks: [
-    {
-      featureName: 'User Interface Method',
-      riskLevel: 'high' as const,
-      description:
-        'Significant overlap detected with US9,555,666. Consider redesigning the interaction pattern or narrowing claims.',
-      mitigation:
-        'Focus claims on the novel data processing aspects rather than the UI layer.',
-    },
-    {
-      featureName: 'Implementation Architecture',
-      riskLevel: 'medium' as const,
-      description:
-        'Moderate overlap with existing system architectures. The specific combination may still be patentable.',
-      mitigation:
-        'Emphasize the unique integration of components rather than individual architectural elements.',
-    },
-  ],
-  contextOverview:
-    'The invention demonstrates strong overall novelty, particularly in its core mechanism and data processing pipeline. The primary risk area is the user interface method, which has substantial prior art overlap. A strategic approach focusing claims on the novel technical components while minimizing UI-specific claims would strengthen the patent application.',
-  recommendedStrategy:
-    'File with emphasis on core mechanism and data processing claims. Consider design patent for UI elements separately.',
-};
 
 export async function POST(req: NextRequest) {
   try {
@@ -132,73 +98,37 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      // Return demo analysis data when no API key is configured
-      return NextResponse.json(transformToAnalysisResult(DEMO_ANALYSIS, analysisType));
-    }
-
-    const openai = new OpenAI();
-
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a patent analysis AI. Given a transcript of an invention description conversation, generate a structured patent novelty analysis. Return valid JSON with this exact structure:
-{
-  "title": "string - analysis title",
-  "noveltyScore": number (0-100),
-  "confidence": number (0-100),
-  "features": [
-    {
-      "name": "string",
-      "noveltyScore": number (0-100),
-      "riskLevel": "low" | "medium" | "high",
-      "description": "string",
-      "closestPriorArt": [
-        {
-          "patentNumber": "string",
-          "title": "string",
-          "overlapPercentage": number (0-100)
-        }
-      ]
-    }
-  ],
-  "keyRisks": [
-    {
-      "featureName": "string",
-      "riskLevel": "low" | "medium" | "high",
-      "description": "string",
-      "mitigation": "string"
-    }
-  ],
-  "contextOverview": "string - 2-3 sentence summary",
-  "recommendedStrategy": "string - strategic recommendation"
-}
-
-Analyze the invention thoroughly and provide realistic patent novelty assessments.`,
-        },
-        {
-          role: 'user',
-          content: `Analyze this invention conversation transcript for patent novelty:\n\n${text}`,
-        },
-      ],
-      max_tokens: 5000,
-      response_format: { type: 'json_object' },
-    });
-
-    const responseContent = completion.choices[0]?.message?.content;
-    if (!responseContent) {
-      return NextResponse.json(transformToAnalysisResult(DEMO_ANALYSIS, analysisType));
-    }
+    // 1. Search database for REAL similar patents using vector ranking
+    console.log('[Analyze API] Searching for real patents...');
+    let realPatents: any[] = [];
 
     try {
-      const apiData = JSON.parse(responseContent);
-      return NextResponse.json(transformToAnalysisResult(apiData, analysisType));
-    } catch {
-      // If parsing fails, return demo data
-      return NextResponse.json(transformToAnalysisResult(DEMO_ANALYSIS, analysisType));
+      realPatents = await rankPatents(text, 5); // Get top 5 real patents
+      console.log(`[Analyze API] Found ${realPatents.length} real patents:`, realPatents);
+
+      // 2. Generate AI explanations for why each patent matched
+      if (realPatents.length > 0) {
+        console.log('[Analyze API] Generating reasoning for patents...');
+        const patentsWithReasoning = await generateRankingReasoning(text, realPatents);
+        realPatents = patentsWithReasoning;
+        console.log(`[Analyze API] Patents with reasoning:`, realPatents);
+      } else {
+        console.warn('[Analyze API] No patents found in database');
+      }
+    } catch (searchError) {
+      console.error('[Analyze API] Patent search error:', searchError);
+      console.warn('[Analyze API] Continuing with feature analysis without patents');
+      // If search fails, still proceed with analysis
     }
+
+    // 3. Transform real patents into analysis result
+    const analysisResult = await transformRealPatentsToAnalysis(
+      text,
+      realPatents,
+      analysisType
+    );
+
+    return NextResponse.json(analysisResult);
   } catch (error) {
     console.error('Analysis API error:', error);
     return NextResponse.json(

@@ -57,6 +57,7 @@ export function buildSafeQuery(data: any) {
 // 4. Data Interfaces
 export interface PatentResult {
   id: string;
+  application_number: string;
   title: string;
   abstract: string;
   similarity_score: number;
@@ -103,9 +104,12 @@ export async function rankPatents(
     }
 
     // 3. Combined Query: Vector Similarity + Dynamic Filters
+    // Use DISTINCT ON to deduplicate patents with the same title/abstract,
+    // preferring rows that have an application_number populated.
     let query = `
-      SELECT
+      SELECT DISTINCT ON (title, abstract)
         id,
+        application_number,
         title,
         abstract,
         1 - (embedding <=> $1::vector) AS similarity_score
@@ -117,7 +121,15 @@ export async function rankPatents(
     }
 
     query += `
-      ORDER BY embedding <=> $1::vector
+      ORDER BY title, abstract,
+        application_number IS NULL ASC,
+        embedding <=> $1::vector
+    `;
+
+    // Wrap in a subquery to apply final ordering and limit
+    query = `
+      SELECT * FROM (${query}) AS deduped
+      ORDER BY similarity_score DESC
       LIMIT ${topK}
     `;
 

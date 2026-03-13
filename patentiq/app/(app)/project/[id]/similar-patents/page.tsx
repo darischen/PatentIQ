@@ -8,17 +8,13 @@ import {
   Filter,
   X,
   Bookmark,
-  ExternalLink,
   AlertTriangle,
   FileText,
   Target,
   Zap,
   ArrowRight,
   ShieldAlert,
-  Hash,
-  Building2,
-  CalendarDays,
-  Globe
+  Hash
 } from 'lucide-react';
 import { useProject } from '@/lib/context/ProjectContext';
 
@@ -27,10 +23,9 @@ interface MockPatent {
   patentId: string;
   match: number;
   title: string;
-  assignee: string;
   tags: string[];
-  filingDate: string;
   abstract: string;
+  reasoning: string;
 }
 
 export default function SimilarPatentsPage() {
@@ -40,75 +35,25 @@ export default function SimilarPatentsPage() {
 
   const [selectedId, setSelectedId] = useState<string>('2');
 
-  const mockPatents: MockPatent[] = [
-    {
-      id: '1',
-      patentId: 'US-2023-0198XA',
-      match: 98,
-      title: 'Decentralized Swarm Logic for Autonomous Drones',
-      assignee: 'AeroTech Dynamics Inc.',
-      tags: ['Drone Logic', 'Mesh Network'],
-      filingDate: 'Nov 14, 2023',
-      abstract: 'A method and system for decentralized swarm logic among a plurality of unmanned aerial vehicles (UAVs). The system utilizes a distributed ledger technology to validate relative coordinates...'
-    },
-    {
-      id: '2',
-      patentId: 'EP-9821-B',
-      match: 94,
-      title: 'Peer-to-Peer Consensus Algorithms in Aerial Vehicles',
-      assignee: 'SkySystems Global',
-      tags: ['Consensus', 'Algorithm'],
-      filingDate: 'Aug 11, 2024',
-      abstract: 'A method and system for decentralized consensus among a plurality of unmanned aerial vehicles (UAVs). The system utilizes a distributed ledger technology to validate relative coordinates and flight paths without a central ground station. This reduces latency in swarm formation adjustments...'
-    },
-    {
-      id: '3',
-      patentId: 'CN-102938-A',
-      match: 76,
-      title: 'Multi-Agent Path Planning for Complex Environments',
-      assignee: 'Beijing Tech Institute',
-      tags: ['Path Planning'],
-      filingDate: 'May 20, 2022',
-      abstract: 'Efficient path planning for multi-agent systems navigating complex obstacles using hierarchical logic and local obstacle avoidance mechanisms.'
-    },
-    {
-      id: '4',
-      patentId: 'US-9982-C',
-      match: 65,
-      title: 'Data Synchronization for Distributed Sensors',
-      assignee: 'Intel Corp.',
-      tags: ['Sensors', 'IoT'],
-      filingDate: 'Mar 12, 2021',
-      abstract: 'A framework for high-frequency data synchronization across distributed sensor nodes in industrial IoT environments.'
-    },
-    {
-      id: '5',
-      patentId: 'JP-2019-555',
-      match: 42,
-      title: 'Remote Control Apparatus for Multiple Toys',
-      assignee: 'Sony Interactive',
-      tags: ['RC Control'],
-      filingDate: 'Sep 01, 2019',
-      abstract: 'Consumer-focused remote control unit capable of managing multiple connected toy drones simultaneously.'
-    },
-    {
-      id: '6',
-      patentId: 'US-8812-A',
-      match: 38,
-      title: 'Swarm Intelligence in Biological Modeling',
-      assignee: 'BioBot Labs',
-      tags: ['Biology', 'Swarm'],
-      filingDate: 'Jan 15, 2020',
-      abstract: 'Algorithms derived from ant-colony behavior applied to virtual modeling of large-scale agent swarms.'
-    }
-  ];
+  // Convert real patents to display format
+  const displayPatents: MockPatent[] = (analysisData?.similarPatentsList || []).map((patent: any, idx: number) => ({
+    id: patent.id || `patent-${idx}`,
+    patentId: patent.application_number || patent.id || 'Unknown',
+    match: Math.round((patent.similarity_score || 0) * 100),
+    title: patent.title || 'Unknown Patent',
+    tags: ['Similar Patent'],
+    abstract: patent.abstract || 'No abstract available.',
+    reasoning: patent.reasoning || '',
+  }));
 
-  const selectedPatent = mockPatents.find(p => p.id === selectedId) || mockPatents[1];
+  // Fallback to mock data if no real patents
+  const patents = displayPatents.length > 0 ? displayPatents : [];
+  const selectedPatent = patents.find(p => p.id === selectedId) || patents[0];
 
-  if (!analysisData) {
+  if (!analysisData || !patents || patents.length === 0) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-slate-500 text-sm font-medium">No analysis data. Run an analysis first.</p>
+        <p className="text-slate-500 text-sm font-medium">No analysis data or similar patents found. Run an analysis first.</p>
       </div>
     );
   }
@@ -170,7 +115,7 @@ export default function SimilarPatentsPage() {
 
           {/* Patent Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6 pb-12">
-            {mockPatents.map((patent) => (
+            {patents.map((patent) => (
               <div
                 key={patent.id}
                 onClick={() => setSelectedId(patent.id)}
@@ -205,10 +150,6 @@ export default function SimilarPatentsPage() {
                   <h3 className="text-[19px] font-black text-slate-900 leading-[1.2] mb-3 group-hover:text-indigo-600 transition-colors tracking-tight">
                     {patent.title}
                   </h3>
-                  <div className="flex items-center gap-2 text-[12px] text-slate-400 font-bold mb-8">
-                    <Building2 size={12} className="text-slate-300" /> {patent.assignee}
-                  </div>
-
                   <div className="flex flex-wrap gap-2 mb-8">
                     {patent.tags.map(tag => (
                       <span key={tag} className="bg-indigo-50/50 text-indigo-500 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border border-indigo-100/30">
@@ -266,54 +207,37 @@ export default function SimilarPatentsPage() {
                 {selectedPatent.title}
               </h2>
 
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2 text-slate-400">
-                  <Building2 size={14} />
-                  <span className="text-[12px] font-black text-slate-600 uppercase tracking-tight">{selectedPatent.assignee}</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-400">
-                  <CalendarDays size={14} />
-                  <span className="text-[12px] font-black text-slate-600 uppercase tracking-tight">{selectedPatent.filingDate}</span>
-                </div>
-              </div>
             </div>
           </div>
 
           <div className="px-10 flex-1 overflow-y-auto custom-scrollbar pb-10 space-y-12">
-            {/* Score Highlight Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-50/50 rounded-[2rem] p-6 border border-slate-100 flex flex-col justify-between h-[120px]">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Docket Status</p>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <p className="text-[16px] font-black text-slate-800">Granted Patent</p>
-                </div>
-              </div>
-              <div className="bg-slate-50/50 rounded-[2rem] p-6 border border-slate-100 flex flex-col justify-between h-[120px]">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Jurisdiction</p>
-                <div className="flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-slate-400" />
-                  <p className="text-[16px] font-black text-slate-800">US-Federal</p>
-                </div>
-              </div>
-            </div>
-
             {/* Critical Overlap Zone */}
-            <div className="bg-[#fef2f2] rounded-[2.5rem] p-8 border border-rose-100 relative overflow-hidden group/risk">
-              <div className="absolute -right-8 -bottom-8 text-rose-500/5 group-hover/risk:scale-110 transition-transform duration-700">
-                <ShieldAlert size={160} />
-              </div>
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3 text-rose-600">
-                  <AlertTriangle size={20} className="animate-pulse" />
-                  <span className="text-[12px] font-black uppercase tracking-[0.2em]">Risk Exposure Map</span>
+            {(() => {
+              const riskLevel = selectedPatent.match > 85 ? 'High' : selectedPatent.match > 60 ? 'Medium' : 'Low';
+              const riskColors = {
+                High: { bg: 'bg-[#fef2f2]', border: 'border-rose-100', icon: 'text-rose-500/5', text: 'text-rose-600', label: 'text-rose-500 border-rose-100/50', body: 'text-rose-950' },
+                Medium: { bg: 'bg-amber-50', border: 'border-amber-100', icon: 'text-amber-500/5', text: 'text-amber-600', label: 'text-amber-500 border-amber-100/50', body: 'text-amber-950' },
+                Low: { bg: 'bg-emerald-50', border: 'border-emerald-100', icon: 'text-emerald-500/5', text: 'text-emerald-600', label: 'text-emerald-500 border-emerald-100/50', body: 'text-emerald-950' },
+              };
+              const colors = riskColors[riskLevel];
+              return (
+                <div className={`${colors.bg} rounded-[2.5rem] p-8 border ${colors.border} relative overflow-hidden group/risk`}>
+                  <div className={`absolute -right-8 -bottom-8 ${colors.icon} group-hover/risk:scale-110 transition-transform duration-700`}>
+                    <ShieldAlert size={160} />
+                  </div>
+                  <div className="flex items-center justify-between mb-6">
+                    <div className={`flex items-center gap-3 ${colors.text}`}>
+                      <AlertTriangle size={20} className={riskLevel === 'High' ? 'animate-pulse' : ''} />
+                      <span className="text-[12px] font-black uppercase tracking-[0.2em]">Risk Exposure Map</span>
+                    </div>
+                    <span className={`bg-white/60 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${colors.label}`}>Level: {riskLevel}</span>
+                  </div>
+                  <p className={`text-[15px] ${colors.body} font-semibold leading-[1.6] relative z-10`}>
+                    {selectedPatent.reasoning || 'No risk reasoning available for this patent. Run a new analysis to generate detailed overlap insights.'}
+                  </p>
                 </div>
-                <span className="bg-white/60 px-3 py-1 rounded-full text-[9px] font-black text-rose-500 uppercase tracking-widest border border-rose-100/50">Level: High</span>
-              </div>
-              <p className="text-[15px] text-rose-950 font-semibold leading-[1.6] relative z-10">
-                Claims 14-18 regarding <span className="text-rose-900 font-black underline decoration-rose-300 decoration-2 underline-offset-4 tracking-tight italic">"decentralized mesh synchronization for swarm logic"</span> directly mirror your primary innovation block.
-              </p>
-            </div>
+              );
+            })()}
 
             {/* Detailed Abstract Section */}
             <div className="space-y-6">

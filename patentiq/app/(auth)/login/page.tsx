@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Grid, Mail, Lock, User, EyeOff, Layout, FileText, BarChart3, Settings as SettingsIcon, Plus, Play } from 'lucide-react';
+import { Grid, EyeOff, Layout, FileText, BarChart3, Settings as SettingsIcon, Plus } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();

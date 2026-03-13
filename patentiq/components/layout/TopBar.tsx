@@ -1,9 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { Search, Zap, Bell } from 'lucide-react';
+import { Search, Zap, Bell, LogOut, User as UserIcon } from 'lucide-react';
+import { useState } from 'react';
+import UserMenu from './UserMenu';
 
 export default function TopBar() {
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
   return (
     <header className="h-20 flex items-center justify-between px-8 bg-white border-b border-slate-100 flex-shrink-0">
       {/* Search */}
@@ -35,17 +39,23 @@ export default function TopBar() {
           <Bell size={18} />
         </button>
 
-        <Link
-          href="/profile"
-          className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 shadow-sm cursor-pointer hover:ring-2 hover:ring-indigo-100 transition-all ml-1 relative group"
-        >
-          <img
-            src="https://picsum.photos/seed/patent-pro-expert/100/100"
-            alt="User Avatar"
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-          />
-          <div className="absolute inset-0 bg-indigo-600/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-        </Link>
+        <div className="relative">
+          <button
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 shadow-sm cursor-pointer hover:ring-2 hover:ring-indigo-100 transition-all ml-1 relative group"
+          >
+            <img
+              src="https://picsum.photos/seed/patent-pro-expert/100/100"
+              alt="User Avatar"
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+            />
+            <div className="absolute inset-0 bg-indigo-600/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </button>
+
+          {showUserMenu && (
+            <UserMenu onClose={() => setShowUserMenu(false)} />
+          )}
+        </div>
       </div>
     </header>
   );
