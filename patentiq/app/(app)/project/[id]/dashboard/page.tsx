@@ -248,9 +248,16 @@ export default function DashboardPage() {
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
                       Closest Reference
                     </p>
-                    <div className="flex items-center gap-2 text-indigo-600 font-bold cursor-pointer hover:underline">
-                      <FileText size={16} />
-                      <span>{data.closestPriorArt}</span>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-indigo-600 font-bold cursor-pointer hover:underline">
+                        <FileText size={16} />
+                        <span>{data.closestPriorArt}</span>
+                      </div>
+                      {data.similarPatentsList && data.similarPatentsList[0]?.application_number && (
+                        <div className="text-xs text-slate-500">
+                          Appl. #: {data.similarPatentsList[0].application_number}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
