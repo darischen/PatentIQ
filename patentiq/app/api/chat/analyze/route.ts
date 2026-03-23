@@ -7,6 +7,7 @@ import { rankPatents } from '@/lib/analysis/query_builder';
 import { generateRankingReasoning, type RankedReasoning } from '@/lib/analysis/reasoning';
 import { generateRecommendations, type RecommendationResult } from '@/lib/analysis/recommendation';
 import { expandQueryWithLLM } from '@/lib/search/queryExpander';
+import { encryptData } from '@/lib/infra/encryption';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -233,7 +234,22 @@ export async function POST(req: NextRequest) {
       analysisType
     );
 
-    return NextResponse.json(analysisResult);
+    // 7. Encrypt analysis result for storage
+    console.log('[Analyze API] Encrypting analysis result...');
+    const { success: encryptSuccess, encrypted } = await encryptData(analysisResult);
+
+    if (encryptSuccess) {
+      console.log('[Analyze API] Analysis result encrypted successfully');
+      // Include encrypted version in response metadata (optional)
+      const responseWithEncryption = {
+        ...analysisResult,
+        _encrypted: encrypted, // For backend storage
+      };
+      return NextResponse.json(responseWithEncryption);
+    } else {
+      console.warn('[Analyze API] Encryption failed, returning unencrypted');
+      return NextResponse.json(analysisResult);
+    }
   } catch (error) {
     console.error('Analysis API error:', error);
     return NextResponse.json(

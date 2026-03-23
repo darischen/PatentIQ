@@ -77,7 +77,7 @@ export async function throttleCall<T>(checkLimitFn: () => Promise<RateLimitRespo
 
 export const ratelimit = {
     async checkWorkflow(userId: string): Promise<RateLimitResponse> {
-        return checkRateLimit(`workflow:${userId}:hour`, 5, 60 * 60 * 1000, "You have reached your workflow submission limit of {limit} per hour. Please try again later.");
+        return checkRateLimit(`workflow:${userId}:second`, 1, 1000, "Rate limit exceeded. Maximum {limit} submission per second. Please try again in a moment.");
     },
     async checkUSPTO(): Promise<RateLimitResponse> {
         return checkRateLimit(`uspto:system:minute`, 10, 60 * 1000, "USPTO API limits reached. Request queued/throttled.");

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { patentRepository } from '@/lib/database/repository';
 import { ratelimit } from '@/lib/infra/ratelimit';
 import { logger } from '@/lib/infra/logger';
+import { encryptData } from '@/lib/infra/encryption';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,13 +27,37 @@ async function handleExport(record: any, identifier: string, skipRateLimit: bool
     });
     await logger.endWorkflow(logId, 'completed');
 
-    return new NextResponse(JSON.stringify(record, null, 2), {
-        status: 200,
-        headers: {
-            'Content-Type': 'application/json',
-            'Content-Disposition': `attachment; filename="patent-analysis-${identifier}.json"`,
-        },
-    });
+    // Encrypt the analysis data
+    console.log('[JSON Export] Encrypting export data...');
+    const { success, encrypted } = await encryptData(record);
+
+    if (success) {
+        console.log('[JSON Export] Export data encrypted successfully');
+        // Return both encrypted (for storage) and plaintext (for download)
+        const exportContent = {
+            encrypted: encrypted,
+            plaintext: record,
+            exportedAt: new Date().toISOString(),
+        };
+
+        return new NextResponse(JSON.stringify(exportContent, null, 2), {
+            status: 200,
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Disposition': `attachment; filename="patent-analysis-${identifier}.json"`,
+                'X-Encrypted': 'true',
+            },
+        });
+    } else {
+        console.warn('[JSON Export] Encryption failed, returning plaintext');
+        return new NextResponse(JSON.stringify(record, null, 2), {
+            status: 200,
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Disposition': `attachment; filename="patent-analysis-${identifier}.json"`,
+            },
+        });
+    }
 }
 
 export async function POST(request: Request) {
