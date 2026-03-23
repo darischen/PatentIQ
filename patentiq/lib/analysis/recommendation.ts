@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { db } from './db';
+import { db } from '../database/db';
 import { PatentResult } from './query_builder';
 
 // Initialize the OpenAI client

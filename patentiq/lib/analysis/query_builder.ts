@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { db } from './db';
+import { db } from '../database/db';
 import OpenAI from 'openai';
 
 // 1. Initialize the OpenAI client

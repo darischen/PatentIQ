@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { patentRepository } from '@/lib/repository';
-import { generateDocxBuffer } from '@/lib/docxGenerator';
-import { ratelimit } from '@/lib/ratelimit';
-import { logger } from '@/lib/logger';
+import { patentRepository } from '@/lib/database/repository';
+import { generateDocxBuffer } from '@/lib/export/docxGenerator';
+import { ratelimit } from '@/lib/infra/ratelimit';
+import { logger } from '@/lib/infra/logger';
 
 export const dynamic = 'force-dynamic';
 

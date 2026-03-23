@@ -1,5 +1,5 @@
-import { ratelimit } from '../lib/ratelimit';
-import { logger } from '../lib/logger';
+import { ratelimit } from '../lib/infra/ratelimit';
+import { logger } from '../lib/infra/logger';
 
 async function testLimitsAndLogs() {
     console.log('--- QA Test: Rate Limiting & Logging ---\n');

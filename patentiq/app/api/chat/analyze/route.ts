@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import type { AnalysisResult } from '@/lib/types/project';
-import { rankPatents } from '@/lib/query_builder';
-import { generateRankingReasoning } from '@/lib/reasoning';
-import { getRecommendations } from '@/lib/recommendation';
-import { rankAndExplain } from '@/lib/ranking_engine';
+import { rankPatents } from '@/lib/analysis/query_builder';
+import { generateRankingReasoning } from '@/lib/analysis/reasoning';
+import { getRecommendations } from '@/lib/analysis/recommendation';
+import { rankAndExplain } from '@/lib/analysis/ranking_engine';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,

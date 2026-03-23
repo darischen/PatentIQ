@@ -22,7 +22,7 @@ import {
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { useProject } from '@/lib/context/ProjectContext';
 import { ExportReportMenu } from '@/components/ExportReportMenu';
-import { transformSandboxDataForExport } from '@/lib/transformSandboxData';
+import { transformSandboxDataForExport } from '@/lib/export/transformSandboxData';
 import type { PatentFeature, AnalysisResult } from '@/lib/types/project';
 
 interface SandboxFeature extends PatentFeature {

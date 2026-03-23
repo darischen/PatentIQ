@@ -1,4 +1,4 @@
-import { db } from './db';
+import { db } from '../database/db';
 
 export const logger = {
     /**

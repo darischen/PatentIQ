@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { rankPatents } from '@/lib/query_builder';
-import { generateRankingReasoning } from '@/lib/reasoning';
+import { rankPatents } from '@/lib/analysis/query_builder';
+import { generateRankingReasoning } from '@/lib/analysis/reasoning';
 
 export async function POST(req: Request) {
   try {

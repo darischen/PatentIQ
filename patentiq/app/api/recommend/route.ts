@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getRecommendations } from '@/lib/recommendation';
+import { getRecommendations } from '@/lib/analysis/recommendation';
 
 export async function POST(req: Request) {
   try {
