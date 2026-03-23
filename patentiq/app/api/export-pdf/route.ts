@@ -1,13 +1,79 @@
 import { NextResponse } from 'next/server';
-import { patentRepository } from '@/lib/repository';
-import { generatePdfBuffer } from '@/lib/pdfGenerator';
-import { ratelimit } from '@/lib/ratelimit';
-import { logger } from '@/lib/logger';
+import { patentRepository } from '@/lib/database/repository';
+import { generatePdfBuffer } from '@/lib/export/pdfGenerator';
+import { ratelimit } from '@/lib/infra/ratelimit';
+import { logger } from '@/lib/infra/logger';
 
 export const dynamic = 'force-dynamic';
 
+async function handleExport(record: any, identifier: string, skipRateLimit: boolean = false) {
+    // 1. Rate Limit (skip for sandbox exports, enforce for database queries)
+    if (!skipRateLimit) {
+        const limitRes = await ratelimit.checkWorkflow('anonymous_pdf_client');
+        if (!limitRes.success) {
+            console.warn(`[PDF API] Rate limit hit: ${limitRes.message}`);
+            return NextResponse.json({ error: limitRes.message }, { status: 429 });
+        }
+    }
+
+    // Initialize Audit Workflow Log
+    const logId = await logger.startWorkflow('anonymous_pdf_client', 'Export PDF Action');
+
+    // 2. Generate PDF
+    try {
+        console.log('>>> [PDF API] Calling generatePdfBuffer...');
+        const pdfBuffer = await generatePdfBuffer(record);
+        console.log('>>> [PDF API] PDF Buffer generated size:', pdfBuffer.length);
+
+        await logger.logApiCall({
+            workflowLogId: logId,
+            service: 'App - PDF Generator',
+            endpoint: '/api/export-pdf',
+            requestParams: { identifier },
+            responseStatus: 200,
+            tokenUsage: 0
+        });
+        await logger.endWorkflow(logId, 'completed');
+
+        return new NextResponse(pdfBuffer as unknown as BodyInit, {
+            status: 200,
+            headers: {
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': `attachment; filename="patent-analysis-${identifier}.pdf"`,
+            },
+        });
+    } catch (pdfError) {
+        console.error('>>> [PDF API] PDF GENERATION FAILED:', pdfError);
+        await logger.endWorkflow(logId, 'failed', pdfError instanceof Error ? pdfError.message : String(pdfError));
+
+        return NextResponse.json({
+            error: 'Failed to generate PDF',
+            details: pdfError instanceof Error ? pdfError.message : String(pdfError)
+        }, { status: 500 });
+    }
+}
+
+export async function POST(request: Request) {
+    console.log('>>> [PDF API] POST Route Started');
+
+    try {
+        const body = await request.json();
+        const { data } = body;
+
+        if (!data || !data.analysis_results) {
+            return NextResponse.json({ error: 'Missing analysis data in request body' }, { status: 400 });
+        }
+
+        console.log('>>> [PDF API] Using provided analysis data');
+        return handleExport(data, 'sandbox-export', true); // skipRateLimit for sandbox
+    } catch (error) {
+        console.error('>>> [PDF API] Error parsing request:', error);
+        return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    }
+}
+
 export async function GET(request: Request) {
-    console.log('>>> [PDF API] Route Started');
+    console.log('>>> [PDF API] GET Route Started');
 
     const { searchParams } = new URL(request.url);
     const queryId = searchParams.get('queryId');
@@ -17,29 +83,17 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Missing queryId parameter' }, { status: 400 });
     }
 
-    // 1. Rate Limit (Enforced)
-    const limitRes = await ratelimit.checkWorkflow('anonymous_pdf_client');
-    if (!limitRes.success) {
-        console.warn(`[PDF API] Rate limit hit: ${limitRes.message}`);
-        return NextResponse.json({ error: limitRes.message }, { status: 429 });
-    }
-
-    // Initialize Audit Workflow Log
-    const logId = await logger.startWorkflow('anonymous_pdf_client', 'Export PDF Action');
-
-
-    // 2. Fetch Data (with robust mock fallback)
+    // Fetch Data (with robust mock fallback)
     let record = null;
     try {
         console.log('>>> [PDF API] Attempting database fetch...');
         record = await patentRepository.getSearchById(queryId);
         console.log(`>>> [PDF API] Database fetch result: ${record ? 'Found' : 'Not Found'}`);
     } catch (dbError) {
-        console.error('>>> [PDF API] Database fetch failed (critical auth/connection error):', dbError);
-        console.log('>>> [PDF API] Proceeding to check for mock fallback...');
+        console.error('>>> [PDF API] Database fetch failed:', dbError);
     }
 
-    // 3. Mock Fallback
+    // Mock Fallback
     if (!record) {
         if (queryId === 'mock-id') {
             console.log('>>> [PDF API] Loading MOCK DATA...');
@@ -79,39 +133,5 @@ export async function GET(request: Request) {
         }
     }
 
-    // 4. Generate PDF
-    try {
-        console.log('>>> [PDF API] Calling generatePdfBuffer...');
-        const pdfBuffer = await generatePdfBuffer(record);
-        console.log('>>> [PDF API] PDF Buffer generated size:', pdfBuffer.length);
-
-        console.log('>>> [PDF API] Sending Response...');
-
-        await logger.logApiCall({
-            workflowLogId: logId,
-            service: 'App - PDF Generator',
-            endpoint: '/api/export-pdf',
-            requestParams: { queryId },
-            responseStatus: 200,
-            tokenUsage: 0
-        });
-        await logger.endWorkflow(logId, 'completed');
-
-        return new NextResponse(pdfBuffer as unknown as BodyInit, {
-            status: 200,
-            headers: {
-                'Content-Type': 'application/pdf',
-                'Content-Disposition': `attachment; filename="patent-analysis-${queryId}.pdf"`,
-            },
-        });
-    } catch (pdfError) {
-        console.error('>>> [PDF API] PDF GENERATION FAILED:', pdfError);
-
-        await logger.endWorkflow(logId, 'failed', pdfError instanceof Error ? pdfError.message : String(pdfError));
-
-        return NextResponse.json({
-            error: 'Failed to generate PDF',
-            details: pdfError instanceof Error ? pdfError.message : String(pdfError)
-        }, { status: 500 });
-    }
+    return handleExport(record, queryId);
 }

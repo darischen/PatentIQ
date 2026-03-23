@@ -1,6 +1,6 @@
 import { BaseConnector } from './base';
 import { PatentData, SearchOptions } from './types';
-import { db } from '../db';
+import { db } from '../database/db';
 
 // ──────────────────────────────────────────────
 // SQL Connector — PostgreSQL / MySQL

@@ -14,7 +14,8 @@ import {
   Zap,
   ArrowRight,
   ShieldAlert,
-  Hash
+  Hash,
+  CheckCircle2
 } from 'lucide-react';
 import { useProject } from '@/lib/context/ProjectContext';
 
@@ -26,6 +27,9 @@ interface MockPatent {
   tags: string[];
   abstract: string;
   reasoning: string;
+  recommendation?: 'Proceed' | 'Refine' | 'Caution';
+  recommendation_reasoning?: string;
+  match_level?: 'HIGH' | 'MEDIUM' | 'LOW' | 'POOR';
 }
 
 export default function SimilarPatentsPage() {
@@ -44,11 +48,28 @@ export default function SimilarPatentsPage() {
     tags: ['Similar Patent'],
     abstract: patent.abstract || 'No abstract available.',
     reasoning: patent.reasoning || '',
+    recommendation: patent.recommendation,
+    recommendation_reasoning: patent.recommendation_reasoning,
+    match_level: patent.match_level,
   }));
 
   // Fallback to mock data if no real patents
   const patents = displayPatents.length > 0 ? displayPatents : [];
   const selectedPatent = patents.find(p => p.id === selectedId) || patents[0];
+
+  // Helper to get recommendation styling
+  const getRecommendationStyles = (recommendation?: string) => {
+    switch(recommendation) {
+      case 'Proceed':
+        return { bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-600', icon: 'text-emerald-500', badge: 'bg-emerald-100/50 text-emerald-700', label: 'text-emerald-500 border-emerald-100/50' };
+      case 'Refine':
+        return { bg: 'bg-amber-50', border: 'border-amber-100', text: 'text-amber-600', icon: 'text-amber-500', badge: 'bg-amber-100/50 text-amber-700', label: 'text-amber-500 border-amber-100/50' };
+      case 'Caution':
+        return { bg: 'bg-rose-50', border: 'border-rose-100', text: 'text-rose-600', icon: 'text-rose-500', badge: 'bg-rose-100/50 text-rose-700', label: 'text-rose-500 border-rose-100/50' };
+      default:
+        return { bg: 'bg-slate-50', border: 'border-slate-100', text: 'text-slate-600', icon: 'text-slate-500', badge: 'bg-slate-100/50 text-slate-700', label: 'text-slate-500 border-slate-100/50' };
+    }
+  };
 
   if (!analysisData || !patents || patents.length === 0) {
     return (
@@ -211,6 +232,41 @@ export default function SimilarPatentsPage() {
           </div>
 
           <div className="px-10 flex-1 overflow-y-auto custom-scrollbar pb-10 space-y-12">
+            {/* Strategic Recommendation Card */}
+            {selectedPatent.recommendation && (() => {
+              const styles = getRecommendationStyles(selectedPatent.recommendation);
+              const icons = {
+                'Proceed': <CheckCircle2 size={20} />,
+                'Refine': <AlertTriangle size={20} />,
+                'Caution': <AlertTriangle size={20} className="animate-pulse" />,
+              };
+              return (
+                <div className={`${styles.bg} rounded-[2.5rem] p-8 border ${styles.border} relative overflow-hidden group/rec`}>
+                  <div className={`absolute -right-8 -bottom-8 ${styles.icon}/5 group-hover/rec:scale-110 transition-transform duration-700`}>
+                    <Target size={160} />
+                  </div>
+                  <div className="flex items-center justify-between mb-6">
+                    <div className={`flex items-center gap-3 ${styles.text}`}>
+                      {icons[selectedPatent.recommendation as keyof typeof icons]}
+                      <span className="text-[12px] font-black uppercase tracking-[0.2em]">Strategic Recommendation</span>
+                    </div>
+                    <span className={`${styles.badge} px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${styles.label}`}>
+                      {selectedPatent.recommendation}
+                    </span>
+                  </div>
+                  <p className={`text-[15px] font-semibold leading-[1.6] relative z-10 ${styles.text === 'text-rose-600' ? 'text-rose-950' : styles.text === 'text-amber-600' ? 'text-amber-950' : 'text-emerald-950'}`}>
+                    {selectedPatent.recommendation_reasoning || `This patent represents a ${selectedPatent.recommendation.toLowerCase()} case for your invention.`}
+                  </p>
+                  {selectedPatent.match_level && (
+                    <div className="mt-4 pt-4 border-t border-current border-opacity-20">
+                      <p className="text-[10px] font-black uppercase tracking-widest mb-2 text-slate-900">Match Level</p>
+                      <p className="text-[13px] font-bold text-slate-900">{selectedPatent.match_level}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* Critical Overlap Zone */}
             {(() => {
               const riskLevel = selectedPatent.match > 85 ? 'High' : selectedPatent.match > 60 ? 'Medium' : 'Low';

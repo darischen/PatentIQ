@@ -1,53 +1,36 @@
-# USPTO Patent Data Parser
+# Patent Parsers & Automation
 
-This module provides a memory-efficient XML parser to extract structured data from United States Patent and Trademark Office (USPTO) bulk files.
+This directory contains the logic for fetching and parsing patent data, specifically from the USPTO.
 
-## Features
-- **Streaming Parsing**: Uses `lxml.etree.iterparse` to handle multi-GB XML files without exhausting RAM.
-- **Data Export**: Outputs parsed data incrementally to JSONL (JSON Lines) or CSV formats.
-- **Robust Error Handling**: Skips malformed nodes while continuing to parse the rest of the file.
+## Directory Structure
 
-## Usage
+- `uspto_parser.py`: Low-level streaming XML parser for USPTO bulk files.
+- `uspto_manager.py`: High-level manager for crawling USPTO bulk links and downloading data.
+- `uspto_update_job.py`: Orchestrator for the monthly automated update.
 
-### Setup
+## USPTO Monthly Update System
 
-All dependencies are included in the root `requirements.txt`.
+The system is designed to automatically extract and update patent data from the USPTO every month.
 
-```bash
-pip install -r requirements.txt
-```
+### Key Components
 
-### Parsing Records
+1. **Detection & Fetching**: `uspto_manager.py` crawls the USPTO bulk data datasets to identify new releases.
+2. **Parsing**: `uspto_parser.py` extracts required fields (ID, Title, Abstract, Claims, inventors, Assignee, CPC, Filing/Grant Date).
+3. **Orchestration**: `uspto_update_job.py` coordinates the download, parse, and database update process.
 
-You can import and use the parser in your Python code:
+### Running the Job
 
-```python
-from parsers.uspto_parser import convert_to_structured
-
-# Convert a raw USPTO XML file to CSV
-convert_to_structured(
-    xml_file="../data/ipg240102.xml", 
-    output_file="../data/output.csv", 
-    format="csv"
-)
-
-# Convert to JSON (JSON Lines format)
-convert_to_structured(
-    xml_file="../data/ipg240102.xml", 
-    output_file="../data/output.jsonl", 
-    format="json"
-)
-```
-
-## Running Tests
-
-To verify the extraction logic, run the unit test suite:
+To run the monthly update manually:
 
 ```bash
-cd parsers
-pytest tests/
+python parsers/uspto_update_job.py
 ```
 
-## Privacy & Security
+### Configuration
 
-> **Warning**: Do not commit raw patent data or generated CSV/JSON outputs to the Git repository. The standard project `.gitignore` assumes all such files are kept safely in the root `data/` directory. Always place raw bulk XML files into `data/` and point the parser to read/write from there.
+Ensure your database credentials are set in `patentiq/.env.local`:
+- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
+
+## Troubleshooting
+
+See the [USPTO Update Job Plan](../brain/2bcda2ad-451b-447c-a2e8-044912d438a7/uspto_update_job_plan.md) for detailed architecture and troubleshooting steps regarding database credentials.

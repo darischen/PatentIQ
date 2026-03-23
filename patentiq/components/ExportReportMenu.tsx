@@ -4,9 +4,10 @@ import { useState } from 'react';
 
 interface Props {
     queryId: string;
+    analysisData?: any;
 }
 
-export function ExportReportMenu({ queryId }: Props) {
+export function ExportReportMenu({ queryId, analysisData }: Props) {
     const [exportingFormat, setExportingFormat] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -14,7 +15,19 @@ export function ExportReportMenu({ queryId }: Props) {
         setExportingFormat(format);
         setError(null);
         try {
-            const res = await fetch(`/api/export-${format}?queryId=${queryId}`);
+            let res;
+
+            // If we have analysis data, send it via POST
+            if (analysisData) {
+                res = await fetch(`/api/export-${format}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: analysisData }),
+                });
+            } else {
+                // Fall back to GET with queryId for database lookups
+                res = await fetch(`/api/export-${format}?queryId=${queryId}`);
+            }
 
             if (!res.ok) {
                 if (res.status === 429) {

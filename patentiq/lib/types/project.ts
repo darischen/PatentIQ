@@ -17,6 +17,23 @@ export interface SimilarPatent {
   abstract: string;
   similarity_score: number;
   reasoning?: string;
+  match_level?: 'HIGH' | 'MEDIUM' | 'LOW' | 'POOR';
+  recommendation?: 'Proceed' | 'Refine' | 'Caution';
+  recommendation_reasoning?: string;
+  concept_overlaps?: {
+    overlap_count: number;
+    overlaps: Array<{
+      invention_concept: string;
+      patent_concept: string;
+      similarity_score: number;
+      match_type: 'exact' | 'partial' | 'related' | 'none';
+      invention_section: string;
+      patent_section: string;
+    }>;
+    highlight_terms: string[];
+    average_similarity: number;
+    risk_level: 'High' | 'Moderate' | 'Low';
+  } | null;
 }
 
 export interface AnalysisResult {
@@ -30,6 +47,8 @@ export interface AnalysisResult {
   similarPatents: number;
   similarPatentsList?: SimilarPatent[];
   analysisType: AnalysisType;
+  overallRecommendation?: 'Proceed' | 'Refine' | 'Caution';
+  overallRecommendationReasoning?: string;
 }
 
 export interface ChatMessage {
