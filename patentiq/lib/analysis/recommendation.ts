@@ -1,90 +1,153 @@
 import OpenAI from 'openai';
-import { db } from '../database/db';
-import { PatentResult } from './query_builder';
+import type { RankedReasoning } from './reasoning';
 
-// Initialize the OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-/**
- * Define explicit scoring thresholds for recommendation quality.
- * These thresholds are used to categorize and filter search results.
- */
 export const RECOMMENDATION_THRESHOLDS = {
-  HIGH_MATCH: 0.85,    // Highly relevant patents
-  MEDIUM_MATCH: 0.70,  // Moderately relevant patents
-  LOW_MATCH: 0.50,     // Loosely related patents
+  HIGH_MATCH: 0.85,
+  MEDIUM_MATCH: 0.70,
+  LOW_MATCH: 0.50,
 };
 
 export type MatchLevel = 'HIGH' | 'MEDIUM' | 'LOW' | 'POOR';
+export type RecommendationAction = 'Proceed' | 'Refine' | 'Caution';
 
-export interface ScoredRecommendation extends PatentResult {
+export interface PatentRecommendation {
+  patent_id: string;
   match_level: MatchLevel;
+  recommendation: RecommendationAction;
+  recommendation_reasoning: string;
 }
 
-/**
- * Determines the match level based on the similarity score.
- */
-function getMatchLevel(score: number): MatchLevel {
+export interface RecommendationResult {
+  patents: PatentRecommendation[];
+  overall_recommendation: RecommendationAction;
+  overall_reasoning: string;
+}
+
+export function getMatchLevel(score: number): MatchLevel {
   if (score >= RECOMMENDATION_THRESHOLDS.HIGH_MATCH) return 'HIGH';
   if (score >= RECOMMENDATION_THRESHOLDS.MEDIUM_MATCH) return 'MEDIUM';
   if (score >= RECOMMENDATION_THRESHOLDS.LOW_MATCH) return 'LOW';
   return 'POOR';
 }
 
+function getDefaultAction(level: MatchLevel): RecommendationAction {
+  if (level === 'HIGH') return 'Caution';
+  if (level === 'MEDIUM') return 'Refine';
+  return 'Proceed';
+}
+
 /**
- * Standalone recommendation engine that retrieves and filters patents
- * based on the defined scoring thresholds.
- * 
- * @param queryText The user's search query or patent description
- * @param minimumScore The exact similarity threshold required for inclusion
- * @param limit Maximum number of results to return
+ * Generates actionable recommendations for each patent and an overall recommendation.
+ * Accepts already-ranked patents (no duplicate DB query).
+ * Uses a single batched GPT call for efficiency.
  */
-export async function getRecommendations(
-  queryText: string,
-  minimumScore: number = RECOMMENDATION_THRESHOLDS.MEDIUM_MATCH,
-  limit: number = 5
-): Promise<ScoredRecommendation[]> {
+export async function generateRecommendations(
+  userInput: string,
+  patents: RankedReasoning[]
+): Promise<RecommendationResult> {
+  // Assign match levels from thresholds
+  const patentsWithLevels = patents.map((p) => ({
+    id: p.id,
+    title: p.title,
+    abstract: p.abstract,
+    similarity_score: p.similarity_score,
+    reasoning: p.reasoning,
+    match_level: getMatchLevel(p.similarity_score),
+  }));
+
+  // If no patents, return a default Proceed recommendation
+  if (patentsWithLevels.length === 0) {
+    return {
+      patents: [],
+      overall_recommendation: 'Proceed',
+      overall_reasoning: 'No similar patents found in the database. The invention appears to be novel based on available data.',
+    };
+  }
+
   try {
-    // 1. Get Vector Embedding for the incoming query
-    const embeddingResponse = await openai.embeddings.create({
-      model: 'text-embedding-3-small',
-      input: queryText,
+    const patentSummaries = patentsWithLevels.map((p, i) =>
+      `Patent ${i + 1} (ID: ${p.id}):
+  Title: ${p.title}
+  Similarity: ${(p.similarity_score * 100).toFixed(1)}%
+  Match Level: ${p.match_level}
+  Why it matched: ${p.reasoning}`
+    ).join('\n\n');
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a patent strategy advisor. Given a user's invention and similar patents found, provide actionable recommendations.
+
+For each patent, recommend one of:
+- "Proceed" — Low overlap, the invention is sufficiently distinct from this patent
+- "Refine" — Moderate overlap, the user should differentiate their claims from this patent
+- "Caution" — High overlap, significant risk of prior art conflict
+
+Also provide an overall recommendation for the invention as a whole.
+
+Return valid JSON:
+{
+  "patents": [
+    {
+      "patent_id": "exact ID from input",
+      "recommendation": "Proceed" | "Refine" | "Caution",
+      "recommendation_reasoning": "1-2 sentence explanation"
+    }
+  ],
+  "overall_recommendation": "Proceed" | "Refine" | "Caution",
+  "overall_reasoning": "2-3 sentence strategic summary"
+}`,
+        },
+        {
+          role: 'user',
+          content: `User's Invention: ${userInput}
+
+Similar Patents Found:
+${patentSummaries}`,
+        },
+      ],
+      max_tokens: 800,
+      temperature: 0.3,
+      response_format: { type: 'json_object' },
     });
-    const queryVector = embeddingResponse.data[0].embedding;
-    const vectorString = `[${queryVector.join(',')}]`;
 
-    // 2. Query Postgres for semantic similarity
-    // We compute: 1 - cosine_distance as the similarity score
-    const queryResult = await db.query(
-      `SELECT
-        id,
-        title,
-        abstract,
-        1 - (embedding <=> $1::vector) AS similarity_score
-      FROM patents
-      ORDER BY embedding <=> $1::vector
-      LIMIT 20`,
-      [vectorString]
-    );
-    const results = queryResult.rows as PatentResult[];
+    const result = JSON.parse(completion.choices[0]?.message?.content || '{}');
 
-    // 3. Filter using the strict recommendation threshold and assign levels
-    const filteredAndScored = results
-      .filter((patent) => patent.similarity_score >= minimumScore)
-      .map((patent) => ({
-        ...patent,
-        match_level: getMatchLevel(patent.similarity_score)
-      }))
-      // Sort strictly by score highest to lowest
-      .sort((a, b) => b.similarity_score - a.similarity_score)
-      .slice(0, limit);
+    // Merge LLM recommendations with threshold-based match levels
+    const enrichedPatents: PatentRecommendation[] = patentsWithLevels.map((p) => {
+      const llmRec = result.patents?.find((r: any) => r.patent_id === p.id);
+      return {
+        patent_id: p.id,
+        match_level: p.match_level,
+        recommendation: llmRec?.recommendation || getDefaultAction(p.match_level),
+        recommendation_reasoning: llmRec?.recommendation_reasoning || `${p.match_level} similarity match (${(p.similarity_score * 100).toFixed(1)}%).`,
+      };
+    });
 
-    return filteredAndScored;
-
+    return {
+      patents: enrichedPatents,
+      overall_recommendation: result.overall_recommendation || getDefaultAction(patentsWithLevels[0].match_level),
+      overall_reasoning: result.overall_reasoning || 'Analysis complete. Review individual patent recommendations for details.',
+    };
   } catch (error) {
-    console.error("Error generating recommendations:", error);
-    throw new Error("Failed to process recommendation logic");
+    console.error('[Recommendations] GPT recommendation generation failed:', error);
+
+    // Fallback: use threshold-based defaults
+    return {
+      patents: patentsWithLevels.map((p) => ({
+        patent_id: p.id,
+        match_level: p.match_level,
+        recommendation: getDefaultAction(p.match_level),
+        recommendation_reasoning: `${p.match_level} similarity match (${(p.similarity_score * 100).toFixed(1)}%).`,
+      })),
+      overall_recommendation: getDefaultAction(patentsWithLevels[0].match_level),
+      overall_reasoning: 'Recommendation generated from similarity thresholds. GPT analysis was unavailable.',
+    };
   }
 }
