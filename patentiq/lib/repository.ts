@@ -55,13 +55,22 @@ export const patentRepository = {
    */
   async getSearchById(id: string) {
     console.log(`[DB Lookup] Fetching query by ID: ${id}`);
-    const query = `
-      SELECT id, user_id, query_text, analysis_results, created_at
-      FROM patent_queries
-      WHERE id = $1;
-    `;
-    const result = await db.query(query, [id]);
-    return result.rows[0] || null;
+    try {
+      const query = `
+        SELECT id, user_id, query_text, analysis_results, created_at
+        FROM patent_queries
+        WHERE id = $1::uuid;
+      `;
+      const result = await db.query(query, [id]);
+      return result.rows[0] || null;
+    } catch (error: any) {
+      // If the ID is not a valid UUID format, just return null gracefully
+      if (error.code === '22P02') {
+        console.warn(`[DB Lookup] Invalid UUID format: ${id}`);
+        return null;
+      }
+      throw error;
+    }
   },
 
   /**

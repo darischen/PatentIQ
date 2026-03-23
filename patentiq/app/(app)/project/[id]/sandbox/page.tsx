@@ -22,6 +22,7 @@ import {
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { useProject } from '@/lib/context/ProjectContext';
 import { ExportReportMenu } from '@/components/ExportReportMenu';
+import { transformSandboxDataForExport } from '@/lib/transformSandboxData';
 import type { PatentFeature, AnalysisResult } from '@/lib/types/project';
 
 interface SandboxFeature extends PatentFeature {
@@ -337,7 +338,10 @@ function SandboxContent({ data, id }: { data: AnalysisResult; id: string }) {
                     </div>
                     <p className="text-[10px] font-black text-slate-800 uppercase tracking-tighter">Export</p>
                   </div>
-                  <ExportReportMenu queryId={id} />
+                  <ExportReportMenu
+                    queryId={id}
+                    analysisData={transformSandboxDataForExport(data, patentTitle)}
+                  />
                 </div>
               </div>
             </div>

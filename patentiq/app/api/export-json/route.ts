@@ -5,6 +5,55 @@ import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
+async function handleExport(record: any, identifier: string, skipRateLimit: boolean = false) {
+    if (!skipRateLimit) {
+        const limitRes = await ratelimit.checkWorkflow('anonymous_json_client');
+        if (!limitRes.success) {
+            console.warn(`[JSON API] Rate limit hit: ${limitRes.message}`);
+            return NextResponse.json({ error: limitRes.message }, { status: 429 });
+        }
+    }
+
+    const logId = await logger.startWorkflow('anonymous_json_client', 'Export JSON Action');
+
+    await logger.logApiCall({
+        workflowLogId: logId,
+        service: 'App - JSON Generator',
+        endpoint: '/api/export-json',
+        requestParams: { identifier },
+        responseStatus: 200,
+        tokenUsage: 0
+    });
+    await logger.endWorkflow(logId, 'completed');
+
+    return new NextResponse(JSON.stringify(record, null, 2), {
+        status: 200,
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Disposition': `attachment; filename="patent-analysis-${identifier}.json"`,
+        },
+    });
+}
+
+export async function POST(request: Request) {
+    console.log('>>> [JSON API] POST Route Started');
+
+    try {
+        const body = await request.json();
+        const { data } = body;
+
+        if (!data || !data.analysis_results) {
+            return NextResponse.json({ error: 'Missing analysis data in request body' }, { status: 400 });
+        }
+
+        console.log('>>> [JSON API] Using provided analysis data');
+        return handleExport(data, 'sandbox-export', true); // skipRateLimit for sandbox
+    } catch (error) {
+        console.error('>>> [JSON API] Error parsing request:', error);
+        return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    }
+}
+
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const queryId = searchParams.get('queryId');
@@ -12,14 +61,6 @@ export async function GET(request: Request) {
     if (!queryId) {
         return NextResponse.json({ error: 'Missing queryId parameter' }, { status: 400 });
     }
-
-    const limitRes = await ratelimit.checkWorkflow('anonymous_json_client');
-    if (!limitRes.success) {
-        console.warn(`[JSON API] Rate limit hit: ${limitRes.message}`);
-        return NextResponse.json({ error: limitRes.message }, { status: 429 });
-    }
-
-    const logId = await logger.startWorkflow('anonymous_json_client', 'Export JSON Action');
 
     let record = null;
     try {
@@ -55,26 +96,9 @@ export async function GET(request: Request) {
                 }
             };
         } else {
-            await logger.endWorkflow(logId, 'failed', 'Record not found');
             return NextResponse.json({ error: 'Record not found' }, { status: 404 });
         }
     }
 
-    await logger.logApiCall({
-        workflowLogId: logId,
-        service: 'App - JSON Generator',
-        endpoint: '/api/export-json',
-        requestParams: { queryId },
-        responseStatus: 200,
-        tokenUsage: 0
-    });
-    await logger.endWorkflow(logId, 'completed');
-
-    return new NextResponse(JSON.stringify(record, null, 2), {
-        status: 200,
-        headers: {
-            'Content-Type': 'application/json',
-            'Content-Disposition': `attachment; filename="patent-analysis-${queryId}.json"`,
-        },
-    });
+    return handleExport(record, queryId);
 }
