@@ -51,6 +51,18 @@ export default function LoginPage() {
                 </button>
               </form>
 
+              <div className="mt-6 text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = '/api/auth/forgot-password';
+                  }}
+                  className="text-sm text-[#7c3aed] hover:text-[#6d28d9] font-semibold transition-colors"
+                >
+                  Forgot your password?
+                </button>
+              </div>
+
               <div className="mt-8 pt-8 border-t border-slate-200">
                 <p className="text-xs text-slate-400 text-center">
                   This application uses Auth0 for secure authentication. Your credentials are protected by industry-standard security practices.

@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ChevronRight, ArrowRight, RefreshCw, Maximize2, Sparkles, Clock,
-  FileText, Bell, File, Layers, Info, Zap
+  FileText, Bell, File, Layers, Info, Zap, Loader2, X, Download
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { useProject } from '@/lib/context/ProjectContext';
@@ -16,6 +16,9 @@ export default function DashboardPage() {
   const id = params.id as string;
 
   const { projects, activeProject, selectProject, analysisData } = useProject();
+  const [generatingReport, setGeneratingReport] = useState<string | null>(null);
+  const [reports, setReports] = useState<{ novelty?: string; claims?: string }>({});
+  const [reportModal, setReportModal] = useState<{ type: 'novelty' | 'claims'; content: string } | null>(null);
 
   // Sync activeProject from URL param
   useEffect(() => {
@@ -75,6 +78,97 @@ export default function DashboardPage() {
       return `Your core innovation in "${data.features[0]?.name || 'the system'}" is highly distinct. Focus on broad independent claims to maximize protection.`;
     }
     return `Consider refining "${data.topRiskFeature}" claims to specifically reduce technical overlap with ${data.closestPriorArt}.`;
+  };
+
+  const fetchAndStoreReport = async (type: 'novelty' | 'claims') => {
+    if (!analysisData) return null;
+
+    try {
+      const endpoint = type === 'novelty' ? '/api/generate-novelty-audit' : '/api/generate-draft-claims';
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          analysisData,
+          projectName: activeProject?.name || 'Invention Analysis',
+        }),
+      });
+
+      if (!res.ok) throw new Error(`Failed to generate ${type} report`);
+
+      const blob = await res.blob();
+      // Convert blob to text for preview (for now we'll extract text content)
+      const text = await blob.text();
+      setReports((prev) => ({
+        ...prev,
+        [type]: text,
+      }));
+      return blob;
+    } catch (err) {
+      console.error(`Error generating ${type}:`, err);
+      alert(`Failed to generate ${type} report. Please try again.`);
+      return null;
+    }
+  };
+
+  const handleReportClick = async (type: 'novelty' | 'claims') => {
+    // If report already exists, show modal
+    if (reports[type]) {
+      setReportModal({ type, content: reports[type] });
+      return;
+    }
+
+    // Otherwise generate and show modal
+    if (!analysisData) return;
+    setGeneratingReport(type);
+    const blob = await fetchAndStoreReport(type);
+    setGeneratingReport(null);
+    if (blob && reports[type]) {
+      setReportModal({ type, content: reports[type] });
+    }
+  };
+
+  const handleRefreshReport = async (type: 'novelty' | 'claims') => {
+    if (!analysisData) return;
+    setGeneratingReport(type);
+    const blob = await fetchAndStoreReport(type);
+    setGeneratingReport(null);
+    if (blob && reports[type]) {
+      setReportModal({ type, content: reports[type] });
+    }
+  };
+
+  const downloadReport = async (type: 'novelty' | 'claims') => {
+    if (!analysisData) return;
+    setGeneratingReport(type);
+    try {
+      const endpoint = type === 'novelty' ? '/api/generate-novelty-audit' : '/api/generate-draft-claims';
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          analysisData,
+          projectName: activeProject?.name || 'Invention Analysis',
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to download');
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = type === 'novelty' ? `novelty-audit-${activeProject?.name || 'report'}.pdf` : `draft-claims-${activeProject?.name || 'claims'}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download error:', err);
+      alert('Failed to download file. Please try again.');
+    } finally {
+      setGeneratingReport(null);
+    }
   };
 
   const statCards = [
@@ -366,37 +460,121 @@ export default function DashboardPage() {
                 <h4 className="font-bold text-slate-800">Available Reports</h4>
               </div>
               <div className="space-y-3 flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                <div className="bg-slate-50 rounded-2xl p-4 flex items-center gap-4 border border-slate-100 hover:border-indigo-100 transition-colors cursor-pointer group/report">
-                  <div className="w-10 h-12 bg-white rounded-lg border border-slate-200 flex flex-col items-center justify-center shadow-sm">
-                    <span className="text-[8px] font-black text-rose-500">PDF</span>
-                  </div>
-                  <div className="flex-1 overflow-hidden">
-                    <p className="text-sm font-bold text-slate-700 truncate">Novelty Audit</p>
-                    <p className="text-[10px] text-slate-400">14.2 MB • Ready</p>
-                  </div>
-                  <RefreshCw
-                    size={14}
-                    className="text-slate-300 group-hover/report:rotate-180 transition-transform duration-700"
-                  />
+                <div className="relative">
+                  <button
+                    onClick={() => handleReportClick('novelty')}
+                    disabled={generatingReport === 'novelty'}
+                    className="w-full bg-slate-50 rounded-2xl p-4 flex items-center gap-4 border border-slate-100 hover:border-indigo-100 transition-colors cursor-pointer group/report disabled:opacity-50"
+                  >
+                    <div className="w-10 h-12 bg-white rounded-lg border border-slate-200 flex flex-col items-center justify-center shadow-sm">
+                      <span className="text-[8px] font-black text-rose-500">PDF</span>
+                    </div>
+                    <div className="flex-1 overflow-hidden text-left">
+                      <p className="text-sm font-bold text-slate-700 truncate">Novelty Audit</p>
+                      <p className="text-[10px] text-slate-400">{generatingReport === 'novelty' ? 'Generating...' : reports.novelty ? 'Ready' : 'Generate'}</p>
+                    </div>
+                    {generatingReport === 'novelty' ? (
+                      <Loader2 size={14} className="text-slate-400 animate-spin" />
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRefreshReport('novelty');
+                        }}
+                        className="p-1 hover:bg-slate-200 rounded transition-colors"
+                      >
+                        <RefreshCw
+                          size={14}
+                          className="text-slate-300 hover:text-slate-600 transition-transform duration-700"
+                        />
+                      </button>
+                    )}
+                  </button>
                 </div>
-                <div className="bg-slate-50 rounded-2xl p-4 flex items-center gap-4 border border-slate-100 hover:border-indigo-100 transition-colors cursor-pointer group/report">
-                  <div className="w-10 h-12 bg-white rounded-lg border border-slate-200 flex flex-col items-center justify-center shadow-sm">
-                    <span className="text-[8px] font-black text-blue-500">DOC</span>
-                  </div>
-                  <div className="flex-1 overflow-hidden">
-                    <p className="text-sm font-bold text-slate-700 truncate">Draft Claims Summary</p>
-                    <p className="text-[10px] text-slate-400">2.1 MB • Generated</p>
-                  </div>
-                  <RefreshCw
-                    size={14}
-                    className="text-slate-300 group-hover/report:rotate-180 transition-transform duration-700"
-                  />
+                <div className="relative">
+                  <button
+                    onClick={() => handleReportClick('claims')}
+                    disabled={generatingReport === 'claims'}
+                    className="w-full bg-slate-50 rounded-2xl p-4 flex items-center gap-4 border border-slate-100 hover:border-indigo-100 transition-colors cursor-pointer group/report disabled:opacity-50"
+                  >
+                    <div className="w-10 h-12 bg-white rounded-lg border border-slate-200 flex flex-col items-center justify-center shadow-sm">
+                      <span className="text-[8px] font-black text-blue-500">DOC</span>
+                    </div>
+                    <div className="flex-1 overflow-hidden text-left">
+                      <p className="text-sm font-bold text-slate-700 truncate">Draft Claims Summary</p>
+                      <p className="text-[10px] text-slate-400">{generatingReport === 'claims' ? 'Generating...' : reports.claims ? 'Ready' : 'Generate'}</p>
+                    </div>
+                    {generatingReport === 'claims' ? (
+                      <Loader2 size={14} className="text-slate-400 animate-spin" />
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRefreshReport('claims');
+                        }}
+                        className="p-1 hover:bg-slate-200 rounded transition-colors"
+                      >
+                        <RefreshCw
+                          size={14}
+                          className="text-slate-300 hover:text-slate-600 transition-transform duration-700"
+                        />
+                      </button>
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Report Modal */}
+      {reportModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+          <div className="bg-white rounded-[2rem] max-w-3xl w-full max-h-[80vh] flex flex-col shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100">
+              <h3 className="text-xl font-bold text-slate-900">
+                {reportModal.type === 'novelty' ? 'Novelty Audit Report' : 'Draft Claims Summary'}
+              </h3>
+              <button
+                onClick={() => setReportModal(null)}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 text-slate-700 text-sm leading-relaxed whitespace-pre-wrap bg-slate-50 font-mono">
+              {reportModal.content.substring(0, 2000)}...
+            </div>
+            <div className="flex gap-3 p-6 border-t border-slate-100">
+              <button
+                onClick={() => {
+                  downloadReport(reportModal.type);
+                  setReportModal(null);
+                }}
+                disabled={generatingReport === reportModal.type}
+                className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-indigo-700 transition-all disabled:opacity-50"
+              >
+                {generatingReport === reportModal.type ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" /> Downloading...
+                  </>
+                ) : (
+                  <>
+                    <Download size={16} /> Download {reportModal.type === 'novelty' ? 'PDF' : 'DOCX'}
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => setReportModal(null)}
+                className="flex-1 bg-slate-100 text-slate-900 px-6 py-3 rounded-lg font-bold hover:bg-slate-200 transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Scrollbar styles */}
       <style dangerouslySetInnerHTML={{ __html: `
