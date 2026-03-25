@@ -167,16 +167,21 @@ export default function ProjectWelcomePage() {
     setError(null);
 
     try {
-      const reader = new FileReader();
-      const content = await new Promise<string>((resolve, reject) => {
-        reader.onload = (event) => resolve((event.target?.result as string) || '');
-        reader.onerror = (err) => reject(err);
-        reader.readAsText(file);
+      // Create FormData and send to parsing API
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/parse-document', {
+        method: 'POST',
+        body: formData,
       });
 
-      if (!content || content.trim().length < 50) {
-        throw new Error('Document content too short.');
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to parse document.');
       }
+
+      const { content } = await res.json();
 
       await new Promise((r) => setTimeout(r, 1500));
       setIsUploading(false);
