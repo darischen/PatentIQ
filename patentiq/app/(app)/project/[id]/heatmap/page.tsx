@@ -96,44 +96,29 @@ function HeatmapContent({ data, id }: { data: AnalysisResult; id: string }) {
             </div>
 
             <div className="space-y-8 text-slate-600 leading-relaxed text-[15px] font-medium">
-              <p>
-                <span className="text-slate-300 font-bold text-xs mr-4">[001]</span>
-                A system for <span
-                  onClick={() => setSelectedFeatureId('1')}
-                  className={`px-2 py-0.5 rounded-md cursor-pointer transition-all hover:scale-105 inline-block ${getStatusBg('high-risk')}`}
-                >autonomous navigation</span> comprising a <span
-                  onClick={() => setSelectedFeatureId('2')}
-                  className={`px-2 py-0.5 rounded-md cursor-pointer transition-all hover:scale-105 inline-block ${getStatusBg('unique')}`}
-                >hybrid LIDAR-radar sensor array</span> configured to detect obstacles in real-time environmental conditions. The sensor array is mounted on a rotatable platform...
-              </p>
-
-              <p>
-                <span className="text-slate-300 font-bold text-xs mr-4">[002]</span>
-                The system further includes a <span
-                  className={`px-2 py-0.5 rounded-md cursor-pointer transition-all hover:scale-105 inline-block ${getStatusBg('partial')}`}
-                >predictive path planning module</span> utilizing a recurrent neural network to estimate trajectory vectors of moving objects.
-              </p>
-
-              <p>
-                <span className="text-slate-300 font-bold text-xs mr-4">[003]</span>
-                Wherein said <span
-                  className={`px-2 py-0.5 rounded-md cursor-pointer transition-all hover:scale-105 inline-block ${getStatusBg('high-risk')}`}
-                >low-latency bus</span> operates at a frequency exceeding 5GHz to ensure synchronized data transmission, minimizing reaction delay to under 10 milliseconds.
-              </p>
-
-              <p>
-                <span className="text-slate-300 font-bold text-xs mr-4">[004]</span>
-                Additionally, the apparatus comprises a failsafe mechanism engaged when confidence scores from the <span
-                  className={`px-2 py-0.5 rounded-md cursor-pointer transition-all hover:scale-105 inline-block ${getStatusBg('unique')}`}
-                >hybrid sensor fusion</span> drop below a threshold.
-              </p>
-
-              <p>
-                <span className="text-slate-300 font-bold text-xs mr-4">[005]</span>
-                The rotatable platform includes a <span
-                  className={`px-2 py-0.5 rounded-md cursor-pointer transition-all hover:scale-105 inline-block ${getStatusBg('partial')}`}
-                >self-cleaning mechanism</span> using high-pressure air bursts.
-              </p>
+              {data.features.length > 0 ? (
+                data.features.map((feature, index) => (
+                  <p key={feature.id || index}>
+                    <span className="text-slate-300 font-bold text-xs mr-4">[{String(index + 1).padStart(3, '0')}]</span>
+                    <span
+                      onClick={() => setSelectedFeatureId(feature.id || `feature-${index}`)}
+                      className={`px-2 py-0.5 rounded-md cursor-pointer transition-all hover:scale-105 inline-block ${getStatusBg(
+                        feature.status
+                      )}`}
+                    >
+                      {feature.name}
+                    </span>
+                    {feature.description && <span className="ml-2">{feature.description}</span>}
+                    {feature.noveltyScore !== undefined && (
+                      <span className="ml-2 text-[12px] text-slate-400">
+                        (Novelty: {feature.noveltyScore}%)
+                      </span>
+                    )}
+                  </p>
+                ))
+              ) : (
+                <p className="text-slate-400 italic">No features extracted. Run an analysis to populate this view.</p>
+              )}
             </div>
           </div>
 
