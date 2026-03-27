@@ -48,7 +48,7 @@ Patentiq AI uses Large Language Models (LLMs) combined with USPTO data to:
 
 ## Architecture Overview
 
-User → API → LLM → USPTO API → Analysis Engine → Recommendation Output
+User → API → LLM → Patent Database → Analysis Engine → Recommendation Output
 
 ---
 
