@@ -45,6 +45,7 @@ Patentiq AI uses Large Language Models (LLMs) combined with USPTO data to:
 - Next.js
 - Vercel
 - Supabase
+- EC2 (Planned)
 
 ---
 
