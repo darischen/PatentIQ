@@ -12,14 +12,6 @@ export default function TopBar() {
     <header className="h-20 flex items-center justify-between px-8 bg-white border-b border-slate-100 flex-shrink-0">
       {/* Search */}
       <div className="flex-1 max-w-xl relative">
-        <div className="absolute left-4 top-1/2 -translate-y-1/2">
-          <Search className="text-slate-400" size={18} />
-        </div>
-        <input
-          type="text"
-          placeholder="Search patents, ideas, or prior art..."
-          className="w-full h-11 bg-slate-50 border border-slate-100 rounded-full pl-11 pr-6 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all placeholder:text-slate-400"
-        />
       </div>
 
       {/* Actions */}
