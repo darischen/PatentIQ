@@ -58,7 +58,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     const newProject: Project = {
       id: Math.random().toString(36).substr(2, 9),
       name,
-      date: 'Just now'
+      createdAt: Date.now()
     };
     setProjects(prev => [newProject, ...prev]);
     setActiveProject(newProject);
@@ -69,7 +69,8 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const deleteProject = useCallback((id: string) => {
     const projectToDelete = projects.find(p => p.id === id);
     if (projectToDelete) {
-      setTrash(t => [projectToDelete, ...t]);
+      const deletedProject = { ...projectToDelete, deletedAt: Date.now() };
+      setTrash(t => [deletedProject, ...t]);
       setProjects(prev => prev.filter(p => p.id !== id));
     }
   }, [projects]);

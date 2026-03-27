@@ -215,13 +215,13 @@ export default function ProjectWelcomePage() {
         </Link>
 
         {/* Center Section: Dark Navigation Pill */}
-        <div className="bg-[#424b6e] rounded-full h-[54px] flex items-center px-10 shadow-xl border border-white/5">
+        <div className="bg-[#232d42] rounded-full h-[54px] flex items-center px-10 shadow-xl border border-white/5">
           <div className="flex items-center justify-center gap-8 md:gap-12">
             <Link href="/projects" className="text-[13px] font-medium transition-all text-slate-400 hover:text-white">
               Projects
             </Link>
             <span className="text-[13px] font-medium text-white">
-              Home/Input
+              Input
             </span>
             <Link href="/history" className="text-[13px] font-medium transition-all text-slate-400 hover:text-white">
               History
@@ -541,7 +541,7 @@ export default function ProjectWelcomePage() {
       </div>
 
       <footer className="mt-auto py-6 text-slate-300 font-bold text-[10px] tracking-[0.3em] uppercase">
-        Patent Intel &bull; Enterprise AI Engine
+        PatentIQ &bull; Enterprise AI Engine
       </footer>
 
       {/* Error Toast */}

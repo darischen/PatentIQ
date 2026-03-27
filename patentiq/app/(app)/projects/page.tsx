@@ -1,16 +1,21 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 import { Search, Plus, ExternalLink, MoreHorizontal, Layout, Grid, Play, X, Trash2, LogOut, AlertCircle, Box } from 'lucide-react';
 import { useProject } from '@/lib/context/ProjectContext';
+import { formatRelativeTime } from '@/lib/utils/formatTime';
 
 export default function ProjectsPage() {
   const router = useRouter();
-  const { projects, addProject, deleteProject, selectProject, logout } = useProject();
+  const pathname = usePathname();
+  const { projects, addProject, deleteProject, selectProject, renameProject, logout } = useProject();
   const [showModal, setShowModal] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [renameProjectId, setRenameProjectId] = useState<string | null>(null);
+  const [renameProjectName, setRenameProjectName] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -48,19 +53,52 @@ export default function ProjectsPage() {
     router.push('/login');
   };
 
+  const handleOpenInNewTab = (projectId: string) => {
+    window.open(`/project/${projectId}`, '_blank');
+    setActiveMenuId(null);
+  };
+
+  const handleDuplicate = (project: typeof projects[0]) => {
+    const newProject = addProject(`${project.name} (Copy)`);
+    if (project.analysisResult) {
+      newProject.analysisResult = project.analysisResult;
+    }
+    setActiveMenuId(null);
+  };
+
+  const handleRenameClick = (projectId: string, currentName: string) => {
+    setRenameProjectId(projectId);
+    setRenameProjectName(currentName);
+    setActiveMenuId(null);
+  };
+
+  const handleRenameSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (renameProjectName.trim() && renameProjectId) {
+      renameProject(renameProjectId, renameProjectName.trim());
+      setRenameProjectId(null);
+      setRenameProjectName('');
+    }
+  };
+
   return (
     <div className="flex h-screen bg-[#f8fafc] overflow-hidden">
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-slate-100 flex flex-col py-6 px-4">
-        <div className="flex items-center gap-3 px-2 mb-10">
-          <div className="w-8 h-8 bg-[#1e293b] rounded-lg flex items-center justify-center">
-            <Grid className="text-white w-5 h-5" />
+        <Link
+          href="/projects"
+          className="flex items-center gap-3 mb-10 px-2 cursor-pointer group"
+        >
+          <div className="w-10 h-10 bg-[#1e293b] rounded-xl flex items-center justify-center transition-transform group-hover:scale-105 shadow-sm">
+            <Grid className="text-white w-6 h-6" />
           </div>
-          <span className="font-bold text-slate-800 tracking-tight">PatentIQ</span>
-        </div>
+          <span className="text-[#1e293b] font-bold text-xl tracking-tight group-hover:text-indigo-600 transition-colors">
+            PatentIQ
+          </span>
+        </Link>
 
         <nav className="space-y-1">
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-slate-100 text-slate-900 font-semibold text-sm cursor-pointer">
+          <button className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm cursor-pointer font-semibold ${pathname === '/projects' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:bg-slate-50'}`}>
             <Layout size={18} /> Recents
           </button>
           <div className="flex items-center justify-between px-3 py-2.5 text-slate-500 font-medium text-sm hover:bg-slate-50 rounded-lg cursor-pointer">
@@ -72,9 +110,9 @@ export default function ProjectsPage() {
           </div>
           <button
             onClick={() => router.push('/projects/trash')}
-            className="w-full flex items-center gap-3 px-3 py-2.5 text-slate-500 font-medium text-sm hover:bg-slate-50 rounded-lg cursor-pointer"
+            className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm cursor-pointer rounded-lg font-medium ${pathname === '/projects/trash' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:bg-slate-50'}`}
           >
-            <Trash2 size={18} className="text-slate-400" /> Trash
+            <Trash2 size={18} className={pathname === '/projects/trash' ? 'text-slate-600' : 'text-slate-400'} /> Trash
           </button>
         </nav>
 
@@ -182,7 +220,7 @@ export default function ProjectsPage() {
                       <MoreHorizontal size={14} className="text-slate-400 group-hover:text-slate-600" />
                     </button>
                   </div>
-                  <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">Edited {p.date}</p>
+                  <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">Edited {formatRelativeTime(p.createdAt)}</p>
 
                   {/* Reference Style Context Menu */}
                   {activeMenuId === p.id && (
@@ -191,7 +229,10 @@ export default function ProjectsPage() {
                       className="absolute top-10 right-0 w-56 bg-[#1a1a1a] rounded-2xl shadow-2xl py-2 z-[100] border border-white/10 animate-in fade-in zoom-in-95 duration-200"
                     >
                       <div className="px-1.5 space-y-0.5">
-                        <button className="w-full text-left px-3 py-2 text-white text-[13px] font-medium hover:bg-white/10 rounded-lg transition-colors flex items-center gap-3 cursor-pointer">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleSelectProject(p); }}
+                          className="w-full text-left px-3 py-2 text-white text-[13px] font-medium hover:bg-white/10 rounded-lg transition-colors flex items-center gap-3 cursor-pointer"
+                        >
                           Show in project
                         </button>
                         <button
@@ -200,11 +241,11 @@ export default function ProjectsPage() {
                         >
                           Open
                         </button>
-                        <button className="w-full text-left px-3 py-2 text-white text-[13px] font-medium hover:bg-white/10 rounded-lg transition-colors flex items-center gap-3 cursor-pointer">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleOpenInNewTab(p.id); }}
+                          className="w-full text-left px-3 py-2 text-white text-[13px] font-medium hover:bg-white/10 rounded-lg transition-colors flex items-center gap-3 cursor-pointer"
+                        >
                           Open in new tab
-                        </button>
-                        <button className="w-full text-left px-3 py-2 text-white text-[13px] font-medium hover:bg-white/10 rounded-lg transition-colors flex items-center gap-3 cursor-pointer">
-                          Open with preview disabled
                         </button>
                       </div>
 
@@ -219,13 +260,10 @@ export default function ProjectsPage() {
                       <div className="h-[1px] bg-white/10 my-1 mx-4" />
 
                       <div className="px-1.5 space-y-0.5">
-                        <button className="w-full text-left px-3 py-2 text-white text-[13px] font-medium hover:bg-white/10 rounded-lg transition-colors flex items-center gap-3 cursor-pointer">
-                          Copy link
-                        </button>
-                        <button className="w-full text-left px-3 py-2 text-white text-[13px] font-medium hover:bg-white/10 rounded-lg transition-colors flex items-center gap-3 cursor-pointer">
-                          Share
-                        </button>
-                        <button className="w-full text-left px-3 py-2 text-white text-[13px] font-medium hover:bg-white/10 rounded-lg transition-colors flex items-center gap-3 cursor-pointer">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDuplicate(p); }}
+                          className="w-full text-left px-3 py-2 text-white text-[13px] font-medium hover:bg-white/10 rounded-lg transition-colors flex items-center gap-3 cursor-pointer"
+                        >
                           Duplicate
                         </button>
                       </div>
@@ -233,20 +271,17 @@ export default function ProjectsPage() {
                       <div className="h-[1px] bg-white/10 my-1 mx-4" />
 
                       <div className="px-1.5 space-y-0.5">
-                        <button className="w-full text-left px-3 py-2 text-white text-[13px] font-medium hover:bg-white/10 rounded-lg transition-colors flex items-center gap-3 cursor-pointer">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleRenameClick(p.id, p.name); }}
+                          className="w-full text-left px-3 py-2 text-white text-[13px] font-medium hover:bg-white/10 rounded-lg transition-colors flex items-center gap-3 cursor-pointer"
+                        >
                           Rename
-                        </button>
-                        <button className="w-full text-left px-3 py-2 text-white text-[13px] font-medium hover:bg-white/10 rounded-lg transition-colors flex items-center gap-3 cursor-pointer">
-                          Move file...
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); deleteProject(p.id); setActiveMenuId(null); }}
                           className="w-full text-left px-3 py-2 text-[#ff4d4d] text-[13px] font-medium hover:bg-[#ff4d4d]/10 rounded-lg transition-colors flex items-center gap-3 cursor-pointer"
                         >
                           Move to trash
-                        </button>
-                        <button className="w-full text-left px-3 py-2 text-white text-[13px] font-medium hover:bg-white/10 rounded-lg transition-colors flex items-center gap-3 cursor-pointer">
-                          Remove from recent
                         </button>
                       </div>
                     </div>
@@ -305,6 +340,40 @@ export default function ProjectsPage() {
                 className="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100/50 cursor-pointer"
               >
                 Create & Begin Discovery
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Rename Project Modal */}
+      {renameProjectId && (
+        <div className="fixed inset-0 bg-[#1e293b]/60 backdrop-blur-sm z-50 flex items-center justify-center p-6 animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-white rounded-[2rem] p-8 shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-slate-800 tracking-tight">Rename Project</h3>
+              <button onClick={() => setRenameProjectId(null)} className="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleRenameSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Project Name</label>
+                <input
+                  autoFocus
+                  required
+                  type="text"
+                  value={renameProjectName}
+                  onChange={(e) => setRenameProjectName(e.target.value)}
+                  placeholder="Enter project name"
+                  className="w-full bg-slate-50 border-none rounded-2xl py-5 px-6 text-sm text-slate-900 font-bold placeholder:text-slate-300 focus:ring-4 focus:ring-indigo-50 transition-all outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100/50 cursor-pointer"
+              >
+                Save Name
               </button>
             </form>
           </div>

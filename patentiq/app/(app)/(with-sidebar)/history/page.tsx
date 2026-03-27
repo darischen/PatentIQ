@@ -14,6 +14,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { useProject } from '@/lib/context/ProjectContext';
+import { formatRelativeTime } from '@/lib/utils/formatTime';
 
 export default function HistoryPage() {
   const { projects } = useProject();
@@ -27,13 +28,13 @@ export default function HistoryPage() {
       .map(p => ({
         id: p.id,
         name: p.name,
-        date: p.date,
+        createdAt: p.createdAt,
         novelty: p.analysisResult?.noveltyScore || 0,
         confidence: p.analysisResult?.confidence || 0,
         status: 'Completed' as const,
         type: 'Analysis' as const,
       }))
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      .sort((a, b) => b.createdAt - a.createdAt);
   }, [projects]);
 
   // Search and filter
@@ -150,7 +151,7 @@ export default function HistoryPage() {
                 </div>
                 <div className="col-span-2 flex items-center justify-end gap-3">
                   <div className="text-right">
-                    <p className="text-[10px] font-bold text-slate-400">{h.date}</p>
+                    <p className="text-[10px] font-bold text-slate-400">{formatRelativeTime(h.createdAt)}</p>
                   </div>
                   <button
                     className="p-2 text-slate-300 hover:text-indigo-600 transition-colors cursor-pointer"
@@ -179,7 +180,6 @@ export default function HistoryPage() {
             <h3 className="text-xl font-black mb-2">Novelty Trends</h3>
             <p className="text-sm text-indigo-100 font-medium">
               Your average novelty score is <span className="font-black text-white">{analytics.avgNovelty}%</span>
-              {analytics.trend > 0 ? ` (↑ ${analytics.trend}% improvement)` : analytics.trend < 0 ? ` (↓ ${Math.abs(analytics.trend)}% change)` : ' (stable)'}
             </p>
           </div>
         </div>

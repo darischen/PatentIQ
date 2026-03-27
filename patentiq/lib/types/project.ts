@@ -60,7 +60,9 @@ export interface ChatMessage {
 export interface Project {
   id: string;
   name: string;
-  date: string;
+  date?: string; // For backward compatibility
+  createdAt: number; // timestamp in ms
+  deletedAt?: number; // timestamp when deleted, only set for trash items
   thumbnail?: string;
   chatHistory?: ChatMessage[];
   analysisResult?: AnalysisResult;

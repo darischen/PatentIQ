@@ -1,12 +1,15 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 import { Trash2, RotateCcw, ArrowLeft, Grid, Clock, Layout, LogOut } from 'lucide-react';
 import { useProject } from '@/lib/context/ProjectContext';
+import { formatRelativeTime } from '@/lib/utils/formatTime';
 
 export default function TrashPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const { trash, restoreProject, permanentDeleteProject, logout } = useProject();
 
   const handleLogout = () => {
@@ -17,114 +20,79 @@ export default function TrashPage() {
   return (
     <div className="flex h-screen bg-[#fcfcfc] overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-64 bg-indigo-50/30 border-r border-indigo-100/50 flex flex-col py-8 px-5 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-transparent pointer-events-none" />
-        <div className="relative z-10 flex items-center gap-3 px-3 mb-12">
-          <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
-            <Grid className="text-white w-5 h-5" />
+      <aside className="w-64 bg-white border-r border-slate-100 flex flex-col py-6 px-4">
+        <Link
+          href="/projects"
+          className="flex items-center gap-3 mb-10 px-2 cursor-pointer group"
+        >
+          <div className="w-10 h-10 bg-[#1e293b] rounded-xl flex items-center justify-center transition-transform group-hover:scale-105 shadow-sm">
+            <Grid className="text-white w-6 h-6" />
           </div>
-          <span className="font-bold text-slate-900 tracking-tight text-lg">PatentIQ</span>
-        </div>
+          <span className="text-[#1e293b] font-bold text-xl tracking-tight group-hover:text-indigo-600 transition-colors">
+            PatentIQ
+          </span>
+        </Link>
 
-        <nav className="relative z-10 space-y-1.5">
-          <p className="text-[10px] font-black text-indigo-300 uppercase tracking-[0.2em] mb-4 px-4">Navigation</p>
+        <nav className="space-y-1">
           <button
             onClick={() => router.push('/projects')}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-white/80 font-medium text-[13px] transition-all"
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm cursor-pointer font-semibold ${pathname === '/projects' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:bg-slate-50'}`}
           >
             <Layout size={18} /> Recents
           </button>
-
-          <div className="pt-6">
-            <p className="text-[10px] font-black text-indigo-300 uppercase tracking-[0.2em] mb-4 px-4">Workspaces</p>
-            <div className="flex items-center justify-between px-4 py-3 text-slate-500 font-medium text-[13px] hover:bg-white/80 rounded-xl cursor-pointer transition-all group">
-              <div className="flex items-center gap-3">
-                <span className="w-5 h-5 bg-indigo-500 text-white flex items-center justify-center rounded-md text-[9px] font-black uppercase shadow-sm group-hover:scale-110 transition-transform">S9</span>
-                Personal
-              </div>
-              <span className="bg-indigo-100/50 text-indigo-600 text-[9px] px-2 py-0.5 rounded-md font-black uppercase tracking-wider">Free</span>
+          <div className="flex items-center justify-between px-3 py-2.5 text-slate-500 font-medium text-sm hover:bg-slate-50 rounded-lg cursor-pointer">
+            <div className="flex items-center gap-3">
+              <span className="w-5 h-5 bg-rose-500 text-white flex items-center justify-center rounded text-[10px] font-bold uppercase">S9</span>
+              Personal
             </div>
-            <button
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white text-indigo-600 font-bold text-[13px] transition-all mt-2 shadow-sm border border-indigo-100/50"
-            >
-              <Trash2 size={18} className="text-rose-500" /> Trash
-            </button>
+            <span className="bg-slate-100 text-slate-400 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-tight">Free</span>
           </div>
+          <button
+            onClick={() => router.push('/projects/trash')}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm cursor-pointer rounded-lg font-medium ${pathname === '/projects/trash' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:bg-slate-50'}`}
+          >
+            <Trash2 size={18} className={pathname === '/projects/trash' ? 'text-slate-600' : 'text-slate-400'} /> Trash
+          </button>
         </nav>
 
-        <div className="relative z-10 mt-auto pt-6 border-t border-indigo-100/50 space-y-1">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50/50 transition-all font-bold text-[13px] active:scale-95"
-          >
-            <LogOut size={18} /> Log Out
-          </button>
-        </div>
+        <button
+          onClick={handleLogout}
+          className="mt-auto flex items-center gap-2 px-3 py-2 text-slate-400 text-xs font-medium hover:text-slate-600 transition-colors cursor-pointer"
+        >
+          <LogOut size={14} /> Log Out
+        </button>
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0">
-        {/* TopBar - Trash style (same as non-project TopBar) */}
-        <div className="w-full px-12 pt-8 pb-2 flex items-center justify-center flex-shrink-0 relative">
-          {/* Left Section: Brand */}
-          <div
-            className="absolute left-12 flex items-center gap-3 cursor-pointer group"
-            onClick={() => router.push('/projects')}
-          >
-            <div className="w-10 h-10 bg-[#4f46e5] rounded-full flex items-center justify-center shadow-lg shadow-indigo-500/30 transition-transform group-hover:scale-105">
-              <Grid className="text-white w-5 h-5" />
-            </div>
-            <span className="text-slate-900 font-bold text-[18px] tracking-tight hidden sm:block">PatentIQ</span>
-          </div>
-
-          {/* Center Section: Dark Navigation Pill */}
-          <div className="bg-[#424b6e] rounded-full h-[54px] flex items-center px-10 shadow-xl border border-white/5 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 opacity-50"></div>
-            <div className="flex items-center justify-center gap-8 md:gap-12 relative z-10">
+        {/* TopBar - Projects style */}
+        <div className="w-full px-4 pt-6 pb-2 flex justify-center flex-shrink-0">
+          <div className="bg-[#232d42] rounded-full h-[54px] flex items-center px-10 shadow-2xl border border-white/5">
+            <div className="flex items-center justify-center gap-8 md:gap-14">
               <button
                 onClick={() => router.push('/projects')}
-                className="text-[13px] font-medium transition-all text-slate-400 hover:text-white"
+                className="text-[13px] font-medium transition-all text-white cursor-pointer"
               >
                 Projects
               </button>
               <button
-                onClick={() => router.push('/projects')}
-                className="text-[13px] font-medium transition-all text-slate-400 hover:text-white"
-              >
-                Home
-              </button>
-              <button
-                onClick={() => router.push('/projects')}
-                className="text-[13px] font-medium transition-all text-slate-400 hover:text-white"
+                onClick={() => router.push('/history')}
+                className="text-[13px] font-medium transition-all text-slate-400 hover:text-white cursor-pointer"
               >
                 History
               </button>
               <button
-                onClick={() => router.push('/projects')}
-                className="text-[13px] font-medium transition-all text-slate-400 hover:text-white"
+                onClick={() => router.push('/help')}
+                className="text-[13px] font-medium transition-all text-slate-400 hover:text-white cursor-pointer"
               >
                 Help
               </button>
               <button
-                onClick={() => router.push('/projects')}
-                className="text-[13px] font-medium transition-all text-slate-400 hover:text-white"
+                onClick={() => router.push('/settings')}
+                className="text-[13px] font-medium transition-all text-slate-400 hover:text-white cursor-pointer"
               >
                 Settings
               </button>
-            </div>
-          </div>
-
-          {/* Right Section: Profile */}
-          <div className="absolute right-12 flex items-center justify-end">
-            <div
-              className="w-10 h-10 rounded-full border-4 border-white overflow-hidden cursor-pointer hover:ring-2 hover:ring-indigo-200 transition-all shadow-xl group relative"
-            >
-              <img
-                src="https://picsum.photos/seed/intel-user-88/100/100"
-                alt="User"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-              />
-              <div className="absolute inset-0 bg-indigo-600/10 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           </div>
         </div>
@@ -189,7 +157,7 @@ export default function TrashPage() {
                     <h3 className="font-bold text-slate-900 text-[15px] truncate mb-2 leading-tight">{p.name}</h3>
                     <div className="flex items-center gap-2">
                       <Clock size={12} className="text-slate-300" />
-                      <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">Deleted {p.date}</p>
+                      <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">Deleted {p.deletedAt ? formatRelativeTime(p.deletedAt) : 'Unknown'}</p>
                     </div>
                   </div>
                 </div>
