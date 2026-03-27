@@ -1,6 +1,6 @@
 # Patentiq AI
 
-AI-powered patent search and drafting assistant built to simplify Patent Websites (USPTO, Goggle Patents) research for students, inventors, and early-stage founders.
+AI-powered patent search and drafting assistant built to simplify Patent Websites (USPTO, Google Patents) research for students, inventors, and early-stage founders.
 
 ---
 
