@@ -29,7 +29,7 @@ Similar Patents Found: ${analysisData.similarPatents}
 Confidence: ${analysisData.confidence}%
 
 Features:
-${analysisData.features.map((f) => `- ${f.name}: Status=${f.status}, Novelty=${f.noveltyScore || 'N/A'}`).join('\n')}
+${analysisData.features.map((f) => `- ${f.name}: Status=${f.status}`).join('\n')}
 
 Top Risk Feature: ${analysisData.topRiskFeature}
 Closest Prior Art: ${analysisData.closestPriorArt}

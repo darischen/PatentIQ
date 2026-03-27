@@ -559,7 +559,7 @@ function ReportModal({
   generatingReport: string | null;
   downloadReport: (type: 'novelty' | 'claims') => Promise<void>;
   setReportModal: (modal: null) => void;
-  docxContainerRef: React.RefObject<HTMLDivElement>;
+  docxContainerRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const [pdfUrl, setPdfUrl] = useState<string>('');
 

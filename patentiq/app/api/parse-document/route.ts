@@ -56,7 +56,7 @@ async function parsePDF(buffer: Buffer): Promise<string> {
   try {
     // Dynamic import to avoid issues if pdf-parse isn't installed
     const pdfParse = await import('pdf-parse');
-    const pdf = await pdfParse.default(buffer);
+    const pdf = await (pdfParse as any)(buffer);
     return pdf.text;
   } catch (error) {
     throw new Error(`PDF parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
