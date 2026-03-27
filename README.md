@@ -43,6 +43,8 @@ Patentiq AI uses Large Language Models (LLMs) combined with USPTO data to:
 - JWT Authentication with Auth0
 - PostgreSQL
 - Next.js
+- Vercel
+- Supabase
 
 ---
 
