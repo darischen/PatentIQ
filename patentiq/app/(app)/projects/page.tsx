@@ -84,10 +84,10 @@ export default function ProjectsPage() {
   return (
     <div className="flex h-screen bg-[#f8fafc] overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-slate-100 flex flex-col py-6 px-4">
+      <aside className="w-72 h-full bg-white border-r border-slate-100 flex flex-col py-8 px-6 shadow-sm z-10">
         <Link
           href="/projects"
-          className="flex items-center gap-3 mb-10 px-2 cursor-pointer group"
+          className="flex items-center gap-3 mb-12 px-2 cursor-pointer group"
         >
           <div className="w-10 h-10 bg-[#1e293b] rounded-xl flex items-center justify-center transition-transform group-hover:scale-105 shadow-sm">
             <Grid className="text-white w-6 h-6" />
@@ -97,27 +97,42 @@ export default function ProjectsPage() {
           </span>
         </Link>
 
-        <nav className="space-y-1">
-          <button className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm cursor-pointer font-semibold ${pathname === '/projects' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:bg-slate-50'}`}>
-            <Layout size={18} /> Recents
-          </button>
-          <div className="flex items-center justify-between px-3 py-2.5 text-slate-500 font-medium text-sm hover:bg-slate-50 rounded-lg cursor-pointer">
-            <div className="flex items-center gap-3">
-              <span className="w-5 h-5 bg-rose-500 text-white flex items-center justify-center rounded text-[10px] font-bold uppercase">S9</span>
-              Personal
+        <div className="flex-1 space-y-10">
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 px-2">
+              Workspace
+            </p>
+            <div className="space-y-1">
+              <button className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm active:scale-95 cursor-pointer ${pathname === '/projects' ? 'bg-[#1e293b] text-white shadow-lg shadow-slate-200' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}>
+                <Layout size={20} /> Recents
+              </button>
+              <div className="flex items-center justify-between px-4 py-3 text-slate-500 font-medium text-sm hover:bg-slate-50 rounded-xl cursor-pointer transition-all">
+                <div className="flex items-center gap-3">
+                  <span className="w-6 h-6 bg-rose-500 text-white flex items-center justify-center rounded text-[10px] font-bold uppercase">S9</span>
+                  Personal
+                </div>
+                <span className="bg-slate-100 text-slate-400 text-[9px] px-2 py-1 rounded font-bold uppercase tracking-tight">Free</span>
+              </div>
             </div>
-            <span className="bg-slate-100 text-slate-400 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-tight">Free</span>
           </div>
-          <button
-            onClick={() => router.push('/projects/trash')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm cursor-pointer rounded-lg font-medium ${pathname === '/projects/trash' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:bg-slate-50'}`}
-          >
-            <Trash2 size={18} className={pathname === '/projects/trash' ? 'text-slate-600' : 'text-slate-400'} /> Trash
-          </button>
-        </nav>
 
-        <button className="mt-auto flex items-center gap-2 px-3 py-2 text-slate-400 text-xs font-medium hover:text-slate-600 transition-colors cursor-pointer">
-          <Box size={14} /> Invite & earn
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 px-2">
+              Others
+            </p>
+            <div className="space-y-1">
+              <button
+                onClick={() => router.push('/projects/trash')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm active:scale-95 cursor-pointer ${pathname === '/projects/trash' ? 'bg-[#1e293b] text-white shadow-lg shadow-slate-200' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+              >
+                <Trash2 size={20} /> Trash
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all font-medium text-sm mt-auto active:scale-95 cursor-pointer">
+          <LogOut size={20} /> Log Out
         </button>
       </aside>
 
