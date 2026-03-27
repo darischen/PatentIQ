@@ -53,6 +53,7 @@ function SandboxContent({ data, id }: { data: AnalysisResult; id: string }) {
     data.features.map((f, idx) => ({ ...f, id: f.id || `feature-${idx}`, enabled: true }))
   );
   const [activeProfile, setActiveProfile] = useState<StrategyProfile>('Balanced');
+  const [exportOpen, setExportOpen] = useState(false);
 
   const metrics = useMemo(() => {
     const activeFeatures = features.filter(f => f.enabled);
@@ -239,8 +240,8 @@ function SandboxContent({ data, id }: { data: AnalysisResult; id: string }) {
                 <TrendingUp size={12} className="text-indigo-400" /> Novelty Probability
               </div>
 
-              <div className="relative w-32 h-32 flex items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="relative w-32 h-32 flex items-center justify-center min-h-32">
+                <ResponsiveContainer width={128} height={128}>
                   <PieChart>
                     <Pie
                       data={chartData}
@@ -331,17 +332,26 @@ function SandboxContent({ data, id }: { data: AnalysisResult; id: string }) {
                   </div>
                 </div>
 
-                <div className="flex flex-col items-end gap-3">
-                  <div className="bg-white px-6 py-6 rounded-[2rem] shadow-xl flex flex-col items-center border border-slate-100">
+                <div className="relative flex flex-col items-end">
+                  <button
+                    onClick={() => setExportOpen(!exportOpen)}
+                    className="bg-white px-6 py-6 rounded-[2rem] shadow-xl flex flex-col items-center border border-slate-100 hover:shadow-lg transition-shadow active:scale-95"
+                  >
                     <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mb-2">
                       <FileDown size={18} />
                     </div>
                     <p className="text-[10px] font-black text-slate-800 uppercase tracking-tighter">Export</p>
-                  </div>
-                  <ExportReportMenu
-                    queryId={id}
-                    analysisData={transformSandboxDataForExport(data, patentTitle)}
-                  />
+                  </button>
+
+                  {exportOpen && (
+                    <div className="absolute top-full mt-2 right-0 bg-white rounded-2xl shadow-lg border border-slate-100 p-3 z-50 animate-in slide-in-from-top-2 duration-200 origin-top-right">
+                      <ExportReportMenu
+                        queryId={id}
+                        analysisData={transformSandboxDataForExport(data, patentTitle)}
+                        onExport={() => setExportOpen(false)}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

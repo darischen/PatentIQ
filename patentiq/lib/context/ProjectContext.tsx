@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Project, AnalysisResult, ChatMessage } from '@/lib/types/project';
+import * as storage from '@/lib/storage/hybrid';
 
 interface ProjectContextType {
   projects: Project[];
@@ -32,26 +33,39 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
 
-  // Load from localStorage on mount
+  // Initialize hybrid storage and load data
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('patentiq-state');
-      if (saved) {
-        const state = JSON.parse(saved);
-        if (state.projects) setProjects(state.projects);
-        if (state.trash) setTrash(state.trash);
-        if (state.user) setUser(state.user);
+    const initialize = async () => {
+      try {
+        // Initialize hybrid storage (detects Supabase → Docker → localStorage)
+        await storage.initializeStorage();
+
+        // Load projects and trash from hybrid storage
+        const savedProjects = await storage.loadProjects();
+        const savedTrash = await storage.loadTrash();
+
+        setProjects(savedProjects);
+        setTrash(savedTrash);
+
+        // Load user from localStorage (Auth0 manages this)
+        const saved = localStorage.getItem('patentiq-state');
+        if (saved) {
+          const state = JSON.parse(saved);
+          if (state.user) setUser(state.user);
+        }
+      } catch (err) {
+        console.error('Failed to initialize storage:', err);
       }
-    } catch {}
-    setLoaded(true);
+      setLoaded(true);
+    };
+
+    initialize();
   }, []);
 
-  // Save to localStorage on change
+  // Save to hybrid storage on change (tries Supabase → Docker → localStorage)
   useEffect(() => {
     if (!loaded) return;
-    try {
-      localStorage.setItem('patentiq-state', JSON.stringify({ projects, trash, user }));
-    } catch {}
+    storage.saveState({ projects, trash, user });
   }, [projects, trash, user, loaded]);
 
   const addProject = useCallback((name: string): Project => {
@@ -61,6 +75,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       createdAt: Date.now()
     };
     setProjects(prev => [newProject, ...prev]);
+    storage.addProject(newProject);
     setActiveProject(newProject);
     setAnalysisDataState(null);
     return newProject;
@@ -72,6 +87,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       const deletedProject = { ...projectToDelete, deletedAt: Date.now() };
       setTrash(t => [deletedProject, ...t]);
       setProjects(prev => prev.filter(p => p.id !== id));
+      storage.deleteProject(id, projectToDelete);
     }
   }, [projects]);
 
@@ -80,13 +96,18 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       const project = prev.find(p => p.id === id);
       if (project) {
         setProjects(ps => [project, ...ps]);
+        storage.restoreProject(id);
       }
       return prev.filter(p => p.id !== id);
     });
   }, []);
 
   const permanentDeleteProject = useCallback((id: string) => {
-    setTrash(prev => prev.filter(p => p.id !== id));
+    setTrash(prev => {
+      const filtered = prev.filter(p => p.id !== id);
+      storage.permanentDeleteProject(id);
+      return filtered;
+    });
   }, []);
 
   const selectProject = useCallback((project: Project) => {
@@ -104,6 +125,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       if (!prev) return prev;
       const updated = { ...prev, analysisResult: data, chatHistory: history };
       setProjects(ps => ps.map(p => p.id === prev.id ? updated : p));
+      storage.updateProject(updated);
       return updated;
     });
   }, []);
@@ -111,7 +133,9 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const updateChatHistory = useCallback((history: ChatMessage[]) => {
     setActiveProject(prev => {
       if (!prev) return prev;
-      return { ...prev, chatHistory: history };
+      const updated = { ...prev, chatHistory: history };
+      storage.updateProject(updated);
+      return updated;
     });
   }, []);
 
@@ -125,7 +149,14 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   }, [activeProject?.chatHistory]);
 
   const renameProject = useCallback((id: string, name: string) => {
-    setProjects(prev => prev.map(p => p.id === id ? { ...p, name } : p));
+    setProjects(prev => {
+      const updated = prev.map(p => p.id === id ? { ...p, name } : p);
+      const project = updated.find(p => p.id === id);
+      if (project) {
+        storage.updateProject(project);
+      }
+      return updated;
+    });
     setActiveProject(prev => prev && prev.id === id ? { ...prev, name } : prev);
   }, []);
 

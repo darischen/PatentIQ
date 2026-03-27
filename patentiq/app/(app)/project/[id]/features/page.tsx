@@ -92,13 +92,10 @@ export default function FeaturesPage() {
       <div className="grid grid-cols-12 gap-8">
         {/* Total Components Card */}
         <div className="col-span-12 lg:col-span-4 bg-white rounded-[2.5rem] p-10 shadow-sm border border-slate-50 relative overflow-hidden flex flex-col justify-between h-[320px]">
-          <div className="absolute top-8 right-8 bg-[#e7f9ed] text-[#10b981] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
-            +2 new
+          <div className="absolute top-8 right-8 w-10 h-10 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600">
+            <Layers size={20} />
           </div>
           <div>
-            <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 mb-8">
-              <Layers size={28} />
-            </div>
             <div className="space-y-1">
               <span className="text-7xl font-black text-slate-900">{data.featuresAnalyzed}</span>
               <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Total Components Identified</p>

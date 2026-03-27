@@ -290,8 +290,8 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex flex-col md:flex-row gap-12 items-center">
-              <div className="relative w-48 h-48 flex-shrink-0">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="relative w-48 h-48 flex-shrink-0 min-h-48">
+                <ResponsiveContainer width={192} height={192}>
                   <PieChart>
                     <Pie
                       data={chartData}
@@ -476,18 +476,20 @@ export default function DashboardPage() {
                     {generatingReport === 'novelty' ? (
                       <Loader2 size={14} className="text-slate-400 animate-spin" />
                     ) : (
-                      <button
+                      <div
                         onClick={(e) => {
                           e.stopPropagation();
                           handleRefreshReport('novelty');
                         }}
-                        className="p-1 hover:bg-slate-200 rounded transition-colors"
+                        className="p-1 hover:bg-slate-200 rounded transition-colors cursor-pointer"
+                        role="button"
+                        tabIndex={0}
                       >
                         <RefreshCw
                           size={14}
                           className="text-slate-300 hover:text-slate-600 transition-transform duration-700"
                         />
-                      </button>
+                      </div>
                     )}
                   </button>
                 </div>
@@ -507,18 +509,20 @@ export default function DashboardPage() {
                     {generatingReport === 'claims' ? (
                       <Loader2 size={14} className="text-slate-400 animate-spin" />
                     ) : (
-                      <button
+                      <div
                         onClick={(e) => {
                           e.stopPropagation();
                           handleRefreshReport('claims');
                         }}
-                        className="p-1 hover:bg-slate-200 rounded transition-colors"
+                        className="p-1 hover:bg-slate-200 rounded transition-colors cursor-pointer"
+                        role="button"
+                        tabIndex={0}
                       >
                         <RefreshCw
                           size={14}
                           className="text-slate-300 hover:text-slate-600 transition-transform duration-700"
                         />
-                      </button>
+                      </div>
                     )}
                   </button>
                 </div>

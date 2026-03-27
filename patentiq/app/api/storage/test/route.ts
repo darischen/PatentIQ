@@ -1,0 +1,48 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+/**
+ * POST /api/storage/test - Test which storage backend is available
+ */
+
+export async function POST(req: NextRequest) {
+  const { backend } = await req.json();
+
+  try {
+    if (backend === 'supabase') {
+      // Test Supabase connection
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        return NextResponse.json({ available: false }, { status: 503 });
+      }
+
+      try {
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        );
+
+        // Try a simple query
+        const { error } = await supabase.from('projects').select('count', { count: 'exact', head: true });
+
+        if (!error) {
+          return NextResponse.json({ available: true, backend: 'supabase' });
+        }
+      } catch (err) {
+        console.warn('Supabase test failed:', err);
+        return NextResponse.json({ available: false }, { status: 503 });
+      }
+    }
+
+    if (backend === 'docker') {
+      // Test Docker PostgreSQL connection
+      // For now, we'll consider it unavailable since it needs server-side setup
+      // In production, you'd connect to the Docker DB here
+      return NextResponse.json({ available: false }, { status: 503 });
+    }
+
+    return NextResponse.json({ available: false }, { status: 400 });
+  } catch (error) {
+    console.error('Storage test error:', error);
+    return NextResponse.json({ available: false }, { status: 500 });
+  }
+}
