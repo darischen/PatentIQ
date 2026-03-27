@@ -12,12 +12,10 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Redirect to Auth0's login page - users will see "Forgot Password?" link there
-    const loginUrl = `https://${auth0Domain}/login?client_id=${clientId}&protocol=oauth2&response_type=code&redirect_uri=${encodeURIComponent(
-      `${process.env.AUTH0_BASE_URL}/api/auth/callback`
-    )}&scope=openid%20profile%20email`;
+    // Redirect directly to Auth0's password reset endpoint
+    const resetUrl = `https://${auth0Domain}/dbconnections/change_password?client_id=${clientId}&connection=Username-Password-Authentication`;
 
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(resetUrl);
   } catch (error) {
     console.error('Password reset error:', error);
     return NextResponse.json(

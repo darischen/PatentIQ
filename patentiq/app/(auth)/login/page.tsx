@@ -55,7 +55,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    window.location.href = '/api/auth/forgot-password';
+                    window.location.href = '/forgot-password';
                   }}
                   className="text-sm text-[#7c3aed] hover:text-[#6d28d9] font-semibold transition-colors"
                 >
