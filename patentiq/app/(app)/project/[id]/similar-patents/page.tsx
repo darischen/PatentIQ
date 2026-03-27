@@ -88,16 +88,10 @@ export default function SimilarPatentsPage() {
             <h1 className="text-3xl font-black text-[#0f172a] tracking-tight">Top Similar Patents</h1>
             <div className="flex items-center gap-2 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{analysisData.similarPatents} Global Matches</span>
+              <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{analysisData.similarPatents} Local Matches</span>
             </div>
           </div>
           <p className="text-slate-500 text-sm font-medium">AI-driven semantic clustering of the competitive patent landscape.</p>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <button className="bg-white border border-slate-200 text-slate-800 px-6 py-2.5 rounded-xl text-xs font-black shadow-sm hover:border-slate-300 transition-all flex items-center gap-2 active:scale-95">
-            <FileText size={16} className="text-indigo-500" /> Export Competitive Audit
-          </button>
         </div>
       </div>
 
@@ -219,9 +213,6 @@ export default function SimilarPatentsPage() {
                     <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mt-1">Ref #{selectedPatent.id}</span>
                   </div>
                 </div>
-                <button onClick={() => setSelectedId('')} className="p-2.5 bg-slate-50 text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all rounded-full border border-slate-100">
-                  <X size={20} />
-                </button>
               </div>
 
               <h2 className="text-[28px] font-black text-slate-900 leading-[1.1] tracking-tight mb-6">
@@ -231,7 +222,7 @@ export default function SimilarPatentsPage() {
             </div>
           </div>
 
-          <div className="px-10 flex-1 overflow-y-auto custom-scrollbar pb-10 space-y-12">
+          <div className="px-10 flex-1 overflow-y-auto custom-scrollbar pb-20 space-y-12">
             {/* Strategic Recommendation Card */}
             {selectedPatent.recommendation && (() => {
               const styles = getRecommendationStyles(selectedPatent.recommendation);
@@ -334,18 +325,8 @@ export default function SimilarPatentsPage() {
             </div>
           </div>
 
-          {/* Sidebar Action Footer */}
-          <div className="px-10 pt-5 pb-14 bg-white border-t border-slate-100 flex items-center gap-4 flex-shrink-0">
-            <button className="flex-1 h-[72px] bg-[#0f172a] text-white rounded-[1.75rem] font-black text-[14px] uppercase tracking-[0.15em] flex items-center justify-center gap-4 hover:bg-slate-800 transition-all shadow-[0_20px_40px_rgba(15,23,42,0.2)] active:scale-[0.97] group/main relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover/main:translate-x-full transition-transform duration-1000" />
-              <FileText size={20} className="text-indigo-400" />
-              View Full Patent
-              <ArrowRight size={18} className="group-hover/main:translate-x-1.5 transition-transform" />
-            </button>
-            <button className="w-[72px] h-[72px] bg-slate-50 border border-slate-200 text-slate-400 rounded-[1.75rem] hover:text-indigo-600 hover:border-indigo-100 hover:bg-white transition-all shadow-sm active:scale-90 flex items-center justify-center group/bookmark">
-              <Bookmark size={24} className="group-hover/bookmark:fill-indigo-600 transition-all" />
-            </button>
-          </div>
+          {/* Sidebar Spacing Footer */}
+          <div className="h-6 bg-white flex-shrink-0"></div>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -8,6 +8,7 @@ import {
   FileText, Bell, File, Layers, Info, Zap, Loader2, X, Download
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { renderAsync } from 'docx-preview';
 import { useProject } from '@/lib/context/ProjectContext';
 
 export default function DashboardPage() {
@@ -17,8 +18,9 @@ export default function DashboardPage() {
 
   const { projects, activeProject, selectProject, analysisData } = useProject();
   const [generatingReport, setGeneratingReport] = useState<string | null>(null);
-  const [reports, setReports] = useState<{ novelty?: string; claims?: string }>({});
-  const [reportModal, setReportModal] = useState<{ type: 'novelty' | 'claims'; content: string } | null>(null);
+  const [reports, setReports] = useState<{ novelty?: Blob; claims?: Blob }>({});
+  const [reportModal, setReportModal] = useState<{ type: 'novelty' | 'claims'; blob: Blob } | null>(null);
+  const docxContainerRef = useRef<HTMLDivElement>(null);
 
   // Sync activeProject from URL param
   useEffect(() => {
@@ -97,11 +99,9 @@ export default function DashboardPage() {
       if (!res.ok) throw new Error(`Failed to generate ${type} report`);
 
       const blob = await res.blob();
-      // Convert blob to text for preview (for now we'll extract text content)
-      const text = await blob.text();
       setReports((prev) => ({
         ...prev,
-        [type]: text,
+        [type]: blob,
       }));
       return blob;
     } catch (err) {
@@ -114,7 +114,7 @@ export default function DashboardPage() {
   const handleReportClick = async (type: 'novelty' | 'claims') => {
     // If report already exists, show modal
     if (reports[type]) {
-      setReportModal({ type, content: reports[type] });
+      setReportModal({ type, blob: reports[type] });
       return;
     }
 
@@ -124,7 +124,7 @@ export default function DashboardPage() {
     const blob = await fetchAndStoreReport(type);
     setGeneratingReport(null);
     if (blob && reports[type]) {
-      setReportModal({ type, content: reports[type] });
+      setReportModal({ type, blob: reports[type] });
     }
   };
 
@@ -134,7 +134,7 @@ export default function DashboardPage() {
     const blob = await fetchAndStoreReport(type);
     setGeneratingReport(null);
     if (blob && reports[type]) {
-      setReportModal({ type, content: reports[type] });
+      setReportModal({ type, blob: reports[type] });
     }
   };
 
@@ -208,7 +208,7 @@ export default function DashboardPage() {
       id: 'similar-patents',
       label: 'Similar Patents',
       value: data.similarPatents,
-      sub: 'Found in global database',
+      sub: 'Found in local database',
       href: `/project/${id}/similar-patents`,
       icon: <FileText size={14} />,
     },
@@ -343,7 +343,7 @@ export default function DashboardPage() {
                       Closest Reference
                     </p>
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-indigo-600 font-bold cursor-pointer hover:underline">
+                      <div className="flex items-center gap-2 text-indigo-600 font-bold">
                         <FileText size={16} />
                         <span>{data.closestPriorArt}</span>
                       </div>
@@ -530,50 +530,13 @@ export default function DashboardPage() {
 
       {/* Report Modal */}
       {reportModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-          <div className="bg-white rounded-[2rem] max-w-3xl w-full max-h-[80vh] flex flex-col shadow-2xl">
-            <div className="flex items-center justify-between p-6 border-b border-slate-100">
-              <h3 className="text-xl font-bold text-slate-900">
-                {reportModal.type === 'novelty' ? 'Novelty Audit Report' : 'Draft Claims Summary'}
-              </h3>
-              <button
-                onClick={() => setReportModal(null)}
-                className="text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                <X size={24} />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6 text-slate-700 text-sm leading-relaxed whitespace-pre-wrap bg-slate-50 font-mono">
-              {reportModal.content.substring(0, 2000)}...
-            </div>
-            <div className="flex gap-3 p-6 border-t border-slate-100">
-              <button
-                onClick={() => {
-                  downloadReport(reportModal.type);
-                  setReportModal(null);
-                }}
-                disabled={generatingReport === reportModal.type}
-                className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-indigo-700 transition-all disabled:opacity-50"
-              >
-                {generatingReport === reportModal.type ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" /> Downloading...
-                  </>
-                ) : (
-                  <>
-                    <Download size={16} /> Download {reportModal.type === 'novelty' ? 'PDF' : 'DOCX'}
-                  </>
-                )}
-              </button>
-              <button
-                onClick={() => setReportModal(null)}
-                className="flex-1 bg-slate-100 text-slate-900 px-6 py-3 rounded-lg font-bold hover:bg-slate-200 transition-all"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        <ReportModal
+          reportModal={reportModal}
+          generatingReport={generatingReport}
+          downloadReport={downloadReport}
+          setReportModal={setReportModal}
+          docxContainerRef={docxContainerRef}
+        />
       )}
 
       {/* Scrollbar styles */}
@@ -581,6 +544,89 @@ export default function DashboardPage() {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
       `}} />
+    </div>
+  );
+}
+
+function ReportModal({
+  reportModal,
+  generatingReport,
+  downloadReport,
+  setReportModal,
+  docxContainerRef,
+}: {
+  reportModal: { type: 'novelty' | 'claims'; blob: Blob };
+  generatingReport: string | null;
+  downloadReport: (type: 'novelty' | 'claims') => Promise<void>;
+  setReportModal: (modal: null) => void;
+  docxContainerRef: React.RefObject<HTMLDivElement>;
+}) {
+  const [pdfUrl, setPdfUrl] = useState<string>('');
+
+  useEffect(() => {
+    if (reportModal.type === 'novelty') {
+      // For PDF, create blob URL
+      const url = URL.createObjectURL(reportModal.blob);
+      setPdfUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else if (reportModal.type === 'claims' && docxContainerRef.current) {
+      // For DOCX, render using docx-preview
+      renderAsync(reportModal.blob, docxContainerRef.current).catch((err) => {
+        console.error('Error rendering DOCX:', err);
+      });
+    }
+  }, [reportModal, docxContainerRef]);
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+      <div className="bg-white rounded-[2rem] max-w-4xl w-full h-[90vh] flex flex-col shadow-2xl">
+        <div className="shrink-0 flex items-center justify-between p-6 border-b border-slate-100">
+          <h3 className="text-xl font-bold text-slate-900">
+            {reportModal.type === 'novelty' ? 'Novelty Audit Report' : 'Draft Claims Summary'}
+          </h3>
+          <button
+            onClick={() => setReportModal(null)}
+            className="text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-hidden bg-slate-50">
+          {reportModal.type === 'novelty' && pdfUrl ? (
+            <iframe src={pdfUrl} className="w-full h-full border-0" />
+          ) : (
+            <div ref={docxContainerRef} className="w-full h-full p-6 overflow-auto" />
+          )}
+        </div>
+
+        <div className="shrink-0 flex gap-3 p-6 border-t border-slate-100">
+          <button
+            onClick={() => {
+              downloadReport(reportModal.type);
+              setReportModal(null);
+            }}
+            disabled={generatingReport === reportModal.type}
+            className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-indigo-700 transition-all disabled:opacity-50"
+          >
+            {generatingReport === reportModal.type ? (
+              <>
+                <Loader2 size={16} className="animate-spin" /> Downloading...
+              </>
+            ) : (
+              <>
+                <Download size={16} /> Download {reportModal.type === 'novelty' ? 'PDF' : 'DOCX'}
+              </>
+            )}
+          </button>
+          <button
+            onClick={() => setReportModal(null)}
+            className="flex-1 bg-slate-100 text-slate-900 px-6 py-3 rounded-lg font-bold hover:bg-slate-200 transition-all"
+          >
+            Close
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

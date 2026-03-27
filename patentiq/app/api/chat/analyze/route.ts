@@ -66,6 +66,94 @@ async function detectConceptOverlaps(
   }
 }
 
+// Helper: Map invention concepts from overlaps to features and determine feature-level risk
+function determineFeatureStatusFromOverlaps(
+  features: any[],
+  overlaps: Record<string, any>[]
+): Record<string, { status: string; overlapCount: number; avgRisk: number }> {
+  const featureRiskMap: Record<
+    string,
+    { status: string; overlapCount: number; avgRisk: number }
+  > = {};
+
+  // Initialize each feature
+  features.forEach((f: any) => {
+    featureRiskMap[f.name] = { status: 'unique', overlapCount: 0, avgRisk: 0 };
+  });
+
+  // Process each patent's overlaps
+  if (!Array.isArray(overlaps) || overlaps.length === 0) {
+    return featureRiskMap;
+  }
+
+  const featureOverlaps: Record<string, number[]> = {}; // Track overlap count per feature
+
+  overlaps.forEach((patentOverlap: any) => {
+    if (!patentOverlap.overlaps || !Array.isArray(patentOverlap.overlaps)) {
+      return;
+    }
+
+    // For each overlap in this patent, find which feature it relates to
+    patentOverlap.overlaps.forEach((overlap: any) => {
+      const inventionConcept = (overlap.invention_concept || '').toLowerCase();
+
+      // Find which feature this invention concept most closely relates to
+      let bestFeatureMatch = null;
+      let highestSimilarity = 0;
+
+      features.forEach((f: any) => {
+        const featureName = (f.name || '').toLowerCase();
+        // Check if the invention concept is part of or related to the feature name
+        if (
+          inventionConcept.includes(featureName) ||
+          featureName.includes(inventionConcept) ||
+          // Also check if they share significant terms
+          inventionConcept.split(' ').some((term: string) =>
+            featureName.includes(term) && term.length > 2
+          )
+        ) {
+          bestFeatureMatch = f.name;
+          highestSimilarity = Math.max(highestSimilarity, overlap.similarity_score || 0);
+        }
+      });
+
+      if (bestFeatureMatch) {
+        if (!featureOverlaps[bestFeatureMatch]) {
+          featureOverlaps[bestFeatureMatch] = [];
+        }
+        featureOverlaps[bestFeatureMatch].push(overlap.similarity_score || 0);
+      }
+    });
+  });
+
+  // Update feature statuses based on overlap evidence
+  Object.keys(featureOverlaps).forEach((featureName: string) => {
+    const scores = featureOverlaps[featureName];
+    const overlapCount = scores.length;
+    const avgSimilarity = scores.reduce((a: number, b: number) => a + b, 0) / scores.length;
+
+    // Determine status based on overlap frequency and severity
+    let status = 'unique';
+    if (overlapCount >= 3 && avgSimilarity >= 0.75) {
+      status = 'high-risk'; // Multiple overlaps with high similarity
+    } else if (overlapCount >= 2 && avgSimilarity >= 0.65) {
+      status = 'high-risk'; // Two significant overlaps
+    } else if (overlapCount >= 1 && avgSimilarity >= 0.7) {
+      status = 'high-risk'; // Single strong overlap
+    } else if (overlapCount >= 1) {
+      status = 'partial'; // Some overlap detected
+    }
+
+    featureRiskMap[featureName] = {
+      status,
+      overlapCount,
+      avgRisk: avgSimilarity,
+    };
+  });
+
+  return featureRiskMap;
+}
+
 // Transform real patent search results to AnalysisResult format
 async function transformRealPatentsToAnalysis(
   userInput: string,
@@ -96,12 +184,20 @@ async function transformRealPatentsToAnalysis(
   ],
   "noveltyScore": number (0-100),
   "confidence": number (0-100),
-  "contextOverview": "string - 2-3 sentence summary"
+  "contextOverview": "string - 2-3 sentence summary",
+  "cpcCodes": [
+    {
+      "code": "string - CPC code (e.g., G06F, H04L)",
+      "title": "string - CPC category title"
+    }
+  ]
 }`,
       },
       {
         role: 'user',
-        content: `Analyze this invention: ${userInput}`,
+        content: `Analyze this invention: ${userInput}
+
+Also suggest 2-4 relevant CPC (Cooperative Patent Classification) codes that best classify this invention.`,
       },
     ],
     max_tokens: 2000,
@@ -133,18 +229,36 @@ async function transformRealPatentsToAnalysis(
     };
   });
 
+  // Determine feature statuses based on actual patent overlap data
+  const featureRiskData = determineFeatureStatusFromOverlaps(
+    analysisData.features || [],
+    Array.isArray(overlaps) ? overlaps : []
+  );
+
   return {
     noveltyScore: analysisData.noveltyScore || 70,
     confidence: analysisData.confidence || 85,
     summary: analysisData.contextOverview || 'Patent analysis completed.',
-    features: (analysisData.features || []).map((f: any, idx: number) => ({
-      id: `feature-${idx}`,
-      name: f.name || '',
-      status: f.riskLevel === 'high' ? 'high-risk' : f.riskLevel === 'low' ? 'unique' : 'partial',
-      description: f.description || '',
-      domain: f.domain || 'Technical',
-      category: idx === 0 ? ('Core' as const) : ('Technical' as const),
-    })),
+    features: (analysisData.features || []).map((f: any, idx: number) => {
+      const riskData = featureRiskData[f.name];
+      // Use overlap-based status if available, otherwise fall back to OpenAI's assessment
+      const status = riskData
+        ? riskData.status
+        : f.riskLevel === 'high'
+          ? 'high-risk'
+          : f.riskLevel === 'low'
+            ? 'unique'
+            : 'partial';
+
+      return {
+        id: `feature-${idx}`,
+        name: f.name || '',
+        status: status as 'unique' | 'partial' | 'high-risk' | 'standard',
+        description: f.description || '',
+        domain: f.domain || 'Technical',
+        category: idx === 0 ? ('Core' as const) : ('Technical' as const),
+      };
+    }),
     topRiskFeature: analysisData.features?.[0]?.name || 'Technical Implementation',
     closestPriorArt: closestPriorArt,
     featuresAnalyzed: analysisData.features?.length || 3,
@@ -153,6 +267,7 @@ async function transformRealPatentsToAnalysis(
     analysisType: analysisType as any,
     overallRecommendation: recommendations?.overall_recommendation,
     overallRecommendationReasoning: recommendations?.overall_reasoning,
+    cpcCodes: analysisData.cpcCodes || [],
   };
 }
 

@@ -13,6 +13,7 @@
     "csv-parse": "^6.1.0",
     "docx": "^9.6.1",
     "docx-parser": "^0.2.1",
+    "docx-preview": "^0.3.7",
     "jspdf": "^4.2.1",
     "lru-cache": "^11.2.6",
     "lucide-react": "^0.576.0",
@@ -24,6 +25,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "recharts": "^3.7.0",
+    "vercel": "^50.37.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {

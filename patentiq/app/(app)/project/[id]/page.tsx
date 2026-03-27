@@ -196,11 +196,6 @@ export default function ProjectWelcomePage() {
 
   // --- Run analysis from chat transcript ---
   const handleStartFinalAnalysis = () => {
-    // If analysis already exists, just navigate to dashboard to view it
-    if (hasExistingAnalysis) {
-      router.push(`/project/${id}/dashboard`);
-      return;
-    }
     const fullTranscript = chatHistory.map((m) => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n');
     callAnalysisAPI(fullTranscript, chatHistory, 'chat');
   };

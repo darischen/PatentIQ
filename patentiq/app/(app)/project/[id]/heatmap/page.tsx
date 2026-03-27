@@ -109,11 +109,6 @@ function HeatmapContent({ data, id }: { data: AnalysisResult; id: string }) {
                       {feature.name}
                     </span>
                     {feature.description && <span className="ml-2">{feature.description}</span>}
-                    {feature.noveltyScore !== undefined && (
-                      <span className="ml-2 text-[12px] text-slate-400">
-                        (Novelty: {feature.noveltyScore}%)
-                      </span>
-                    )}
                   </p>
                 ))
               ) : (

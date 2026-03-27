@@ -49,6 +49,7 @@ export interface AnalysisResult {
   analysisType: AnalysisType;
   overallRecommendation?: 'Proceed' | 'Refine' | 'Caution';
   overallRecommendationReasoning?: string;
+  cpcCodes?: Array<{ code: string; title: string }>;
 }
 
 export interface ChatMessage {
