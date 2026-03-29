@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth0 } from '@/lib/auth/auth0';
 
 /**
- * GET /api/storage/projects - Load all projects
+ * GET /api/storage/projects - Load all projects for authenticated user
  * POST /api/storage/projects - Add a project
  * PUT /api/storage/projects - Update a project
  */
@@ -11,7 +12,14 @@ export async function GET(req: NextRequest) {
 
   try {
     if (backend === 'supabase') {
-      // Try Supabase
+      // Get Auth0 session for user_id
+      const session = await auth0.getSession();
+      const userId = session?.user?.sub;
+
+      if (!userId) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+
       try {
         const { createClient } = await import('@supabase/supabase-js');
         const supabase = createClient(
@@ -22,6 +30,7 @@ export async function GET(req: NextRequest) {
         const { data, error } = await supabase
           .from('projects')
           .select('*')
+          .eq('user_id', userId)
           .is('deleted_at', null);
 
         if (!error && data) {
@@ -57,6 +66,14 @@ export async function POST(req: NextRequest) {
 
   try {
     if (backend === 'supabase') {
+      // Get Auth0 session for user_id
+      const session = await auth0.getSession();
+      const userId = session?.user?.sub;
+
+      if (!userId) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+
       try {
         const { createClient } = await import('@supabase/supabase-js');
         const supabase = createClient(
@@ -64,15 +81,24 @@ export async function POST(req: NextRequest) {
           process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         );
 
+        const projectWithUser = {
+          ...project,
+          user_id: userId,
+        };
+
         const { error } = await supabase
           .from('projects')
-          .insert([project]);
+          .insert([projectWithUser]);
 
         if (!error) {
           return NextResponse.json({ success: true });
+        } else {
+          console.error('Supabase insert error:', error);
+          return NextResponse.json({ error: error.message }, { status: 400 });
         }
       } catch (err) {
         console.error('Supabase error:', err);
+        return NextResponse.json({ error: String(err) }, { status: 500 });
       }
     }
 
@@ -90,6 +116,14 @@ export async function PUT(req: NextRequest) {
 
   try {
     if (backend === 'supabase') {
+      // Get Auth0 session for user_id
+      const session = await auth0.getSession();
+      const userId = session?.user?.sub;
+
+      if (!userId) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+
       try {
         const { createClient } = await import('@supabase/supabase-js');
         const supabase = createClient(
@@ -100,13 +134,18 @@ export async function PUT(req: NextRequest) {
         const { error } = await supabase
           .from('projects')
           .update(project)
-          .eq('id', project.id);
+          .eq('id', project.id)
+          .eq('user_id', userId);
 
         if (!error) {
           return NextResponse.json({ success: true });
+        } else {
+          console.error('Supabase update error:', error);
+          return NextResponse.json({ error: error.message }, { status: 400 });
         }
       } catch (err) {
         console.error('Supabase error:', err);
+        return NextResponse.json({ error: String(err) }, { status: 500 });
       }
     }
 
