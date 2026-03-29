@@ -17,6 +17,7 @@ export default function ProjectsPage() {
   const [renameProjectId, setRenameProjectId] = useState<string | null>(null);
   const [renameProjectName, setRenameProjectName] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -40,7 +41,18 @@ export default function ProjectsPage() {
 
   const toggleMenu = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    setActiveMenuId(activeMenuId === id ? null : id);
+    if (activeMenuId === id) {
+      setActiveMenuId(null);
+    } else {
+      setActiveMenuId(id);
+      // Calculate menu position based on button position
+      const button = e.currentTarget as HTMLElement;
+      const rect = button.getBoundingClientRect();
+      setMenuPosition({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
   };
 
   const handleSelectProject = (project: typeof projects[0]) => {
@@ -225,12 +237,12 @@ export default function ProjectsPage() {
                     <img src={p.thumbnail} alt={p.name} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                   )}
                 </div>
-                <div className="p-4 relative">
-                  <div className="flex justify-between items-start mb-1">
-                    <h3 className="font-bold text-slate-800 text-sm group-hover:text-indigo-600 transition-colors truncate pr-6">{p.name}</h3>
+                <div className="p-4">
+                  <div className="flex justify-between items-center gap-2 mb-1">
+                    <h3 className="font-bold text-slate-800 text-sm group-hover:text-indigo-600 transition-colors truncate">{p.name}</h3>
                     <button
                       onClick={(e) => toggleMenu(e, p.id)}
-                      className="p-1 hover:bg-slate-100 rounded-md transition-colors absolute right-3 top-3.5 z-10 cursor-pointer"
+                      className="p-1 hover:bg-slate-100 rounded-md transition-colors flex-shrink-0 cursor-pointer"
                     >
                       <MoreHorizontal size={14} className="text-slate-400 group-hover:text-slate-600" />
                     </button>
@@ -241,7 +253,11 @@ export default function ProjectsPage() {
                   {activeMenuId === p.id && (
                     <div
                       ref={menuRef}
-                      className="absolute top-10 right-0 w-56 bg-[#1a1a1a] rounded-2xl shadow-2xl py-2 z-50 border border-white/10 animate-in fade-in zoom-in-95 duration-200"
+                      className="fixed w-56 bg-[#1a1a1a] rounded-2xl shadow-2xl py-2 z-50 border border-white/10 animate-in fade-in zoom-in-95 duration-200"
+                      style={{
+                        top: `${menuPosition.top}px`,
+                        right: `${menuPosition.right}px`,
+                      }}
                     >
                       <div className="px-1.5 space-y-0.5">
                         <button
