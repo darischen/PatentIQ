@@ -16,9 +16,10 @@ export async function POST(req: NextRequest) {
 
       try {
         const { createClient } = await import('@supabase/supabase-js');
+        // Use service role key for testing (has full access)
         const supabase = createClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+          process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
         );
 
         // Try a simple query
