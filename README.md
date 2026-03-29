@@ -59,3 +59,4 @@ User → API → LLM → Patent Database → Analysis Engine → Recommendation 
 
 ### 1. Clone the repo
 
+``` git clone https://github.com/haileasy-debug/PatentIQ-ai.git ```
