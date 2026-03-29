@@ -23,13 +23,16 @@ export async function POST(req: NextRequest) {
         );
 
         // Try a simple query
-        const { error } = await supabase.from('projects').select('count', { count: 'exact', head: true });
+        const { data, error } = await supabase.from('projects').select('id').limit(1);
 
         if (!error) {
           return NextResponse.json({ available: true, backend: 'supabase' });
+        } else {
+          console.error('Supabase query error:', error);
+          return NextResponse.json({ available: false, error: error.message }, { status: 503 });
         }
       } catch (err) {
-        console.warn('Supabase test failed:', err);
+        console.error('Supabase test exception:', err);
         return NextResponse.json({ available: false }, { status: 503 });
       }
     }
