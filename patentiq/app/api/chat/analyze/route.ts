@@ -1,65 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { spawn } from 'child_process';
-import { join } from 'path';
 import type { AnalysisResult } from '@/lib/types/project';
 import { rankPatents } from '@/lib/analysis/query_builder';
 import { generateRankingReasoning, type RankedReasoning } from '@/lib/analysis/reasoning';
 import { generateRecommendations, type RecommendationResult } from '@/lib/analysis/recommendation';
 import { expandQueryWithLLM } from '@/lib/search/queryExpander';
 import { encryptData } from '@/lib/infra/encryption';
+import { detectConceptOverlaps } from '@/lib/analysis/overlapDetection';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Helper function to detect concept overlaps using Python
-async function detectConceptOverlaps(
+// Helper function to detect concept overlaps using TypeScript
+function getConceptOverlaps(
   inventionText: string,
   patents: RankedReasoning[]
-): Promise<Record<string, any>[]> {
+): Record<string, any>[] {
   try {
-    const inputData = {
-      invention: inventionText,
-      patents: patents.map(p => ({
-        id: p.id,
-        text: p.abstract || p.title || '',
-      })),
-    };
+    const patentsInput = patents.map(p => ({
+      id: p.id,
+      text: p.abstract || p.title || '',
+    }));
 
-    const scriptPath = join(process.cwd(), 'scripts', 'detect_overlaps.py');
-
-    return new Promise((resolve, reject) => {
-      const python = spawn('python', [scriptPath]);
-      let output = '';
-      let errorOutput = '';
-
-      python.stdout.on('data', (data) => {
-        output += data.toString();
-      });
-
-      python.stderr.on('data', (data) => {
-        errorOutput += data.toString();
-      });
-
-      python.on('close', (code) => {
-        if (code !== 0) {
-          console.error('[Overlap Detection] Python error:', errorOutput);
-          reject(new Error(errorOutput || `Python script exited with code ${code}`));
-          return;
-        }
-        try {
-          resolve(JSON.parse(output));
-        } catch (e) {
-          console.error('[Overlap Detection] JSON parse error:', output);
-          reject(e);
-        }
-      });
-
-      // Send input via stdin
-      python.stdin.write(JSON.stringify(inputData));
-      python.stdin.end();
-    });
+    return detectConceptOverlaps(inventionText, patentsInput);
   } catch (error) {
     console.error('[Analyze API] Overlap detection failed:', error);
     return [];
@@ -315,9 +279,9 @@ export async function POST(req: NextRequest) {
           console.log(`[Analyze API] Patent ${idx + 1} (${rec.patent_id}): ${rec.recommendation} (${rec.match_level}) - ${rec.recommendation_reasoning}`);
         });
 
-        // 5. Detect concept overlaps with Python
+        // 5. Detect concept overlaps
         console.log('[Analyze API] Detecting concept overlaps...');
-        overlaps = await detectConceptOverlaps(text, realPatents);
+        overlaps = getConceptOverlaps(text, realPatents);
         console.log('[Analyze API] Concept overlaps detected');
 
         // Log overlap details

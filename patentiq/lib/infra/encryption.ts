@@ -70,8 +70,14 @@ function getKeyMaterial(keyMaterial?: string): string {
 
 /**
  * Log encryption events for audit trail
+ * Skip in production (Vercel has read-only filesystem)
  */
 function logEncryptionEvent(event: string, details?: Record<string, any>): void {
+  // Skip file logging in production environments (read-only filesystem)
+  if (process.env.NODE_ENV === 'production') {
+    return;
+  }
+
   const payload = {
     timestamp_utc: new Date().toISOString(),
     event,
