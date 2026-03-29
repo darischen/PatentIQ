@@ -31,8 +31,13 @@ export async function POST(req: NextRequest) {
         if (state.projects && Array.isArray(state.projects)) {
           for (const project of state.projects) {
             const projectWithUser = {
-              ...project,
+              id: project.id,
+              name: project.name,
               user_id: userId,
+              created_at: project.createdAt,
+              thumbnail: project.thumbnail,
+              analysis_result: project.analysisResult,
+              chat_history: project.chatHistory,
             };
 
             const { error } = await supabase

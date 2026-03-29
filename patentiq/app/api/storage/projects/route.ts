@@ -95,9 +95,15 @@ export async function POST(req: NextRequest) {
           process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         );
 
+        // Only save columns that exist in the database (convert camelCase to snake_case)
         const projectWithUser = {
-          ...project,
+          id: project.id,
+          name: project.name,
           user_id: userId,
+          created_at: project.createdAt,
+          thumbnail: project.thumbnail,
+          analysis_result: project.analysisResult,
+          chat_history: project.chatHistory,
         };
 
         const { error } = await supabase
@@ -152,9 +158,17 @@ export async function PUT(req: NextRequest) {
           process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         );
 
+        // Only update columns that exist in the database (convert camelCase to snake_case)
+        const updateData = {
+          name: project.name,
+          thumbnail: project.thumbnail,
+          analysis_result: project.analysisResult,
+          chat_history: project.chatHistory,
+        };
+
         const { error } = await supabase
           .from('projects')
-          .update(project)
+          .update(updateData)
           .eq('id', project.id)
           .eq('user_id', userId);
 
