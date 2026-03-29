@@ -11,36 +11,10 @@ let activeBackend: StorageBackend = 'localStorage';
 
 // Test which backends are available
 async function detectAvailableBackend(): Promise<StorageBackend> {
-  // Try Supabase first
+  // If Supabase env vars exist, use Supabase (assume it's available)
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    try {
-      const response = await fetch('/api/storage/test', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ backend: 'supabase' }),
-      });
-      if (response.ok) {
-        console.log('✓ Using Supabase storage');
-        return 'supabase';
-      }
-    } catch (err) {
-      console.warn('Supabase unavailable, trying Docker...');
-    }
-  }
-
-  // Try Docker PostgreSQL
-  try {
-    const response = await fetch('/api/storage/test', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ backend: 'docker' }),
-    });
-    if (response.ok) {
-      console.log('✓ Using Docker PostgreSQL storage');
-      return 'docker';
-    }
-  } catch (err) {
-    console.warn('Docker unavailable, using localStorage');
+    console.log('✓ Using Supabase storage');
+    return 'supabase';
   }
 
   // Fallback to localStorage
