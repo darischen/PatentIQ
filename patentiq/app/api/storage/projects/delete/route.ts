@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
         const { error } = await supabase
           .from('projects')
-          .update({ deleted_at: new Date().toISOString() })
+          .update({ deleted_at: Date.now() })
           .eq('id', projectId)
           .eq('user_id', userId);
 
