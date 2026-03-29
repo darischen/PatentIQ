@@ -32,7 +32,18 @@ export async function GET(req: NextRequest) {
           .not('deleted_at', 'is', null);
 
         if (!error && data) {
-          return NextResponse.json(data);
+          // Convert snake_case from DB to camelCase for frontend
+          const projects = data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            createdAt: p.created_at,
+            updatedAt: p.updated_at,
+            thumbnail: p.thumbnail,
+            analysisResult: p.analysis_result,
+            chatHistory: p.chat_history,
+            deletedAt: p.deleted_at,
+          }));
+          return NextResponse.json(projects);
         }
       } catch (err) {
         console.error('Supabase error:', err);
