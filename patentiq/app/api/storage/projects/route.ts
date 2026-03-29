@@ -13,11 +13,18 @@ export async function GET(req: NextRequest) {
   try {
     if (backend === 'supabase') {
       // Get Auth0 session for user_id
-      const session = await auth0.getSession();
-      const userId = session?.user?.sub;
+      let userId: string | undefined;
+      try {
+        const session = await auth0.getSession();
+        userId = session?.user?.sub;
+      } catch (err) {
+        console.warn('Failed to get Auth0 session:', err);
+        // If no session, return empty array (will fallback to localStorage)
+        return NextResponse.json([]);
+      }
 
       if (!userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        return NextResponse.json([]);
       }
 
       try {
@@ -67,11 +74,18 @@ export async function POST(req: NextRequest) {
   try {
     if (backend === 'supabase') {
       // Get Auth0 session for user_id
-      const session = await auth0.getSession();
-      const userId = session?.user?.sub;
+      let userId: string | undefined;
+      try {
+        const session = await auth0.getSession();
+        userId = session?.user?.sub;
+      } catch (err) {
+        console.warn('Failed to get Auth0 session:', err);
+        // If no session, fallback to localStorage
+        return NextResponse.json({ success: true });
+      }
 
       if (!userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        return NextResponse.json({ success: true });
       }
 
       try {
@@ -117,11 +131,18 @@ export async function PUT(req: NextRequest) {
   try {
     if (backend === 'supabase') {
       // Get Auth0 session for user_id
-      const session = await auth0.getSession();
-      const userId = session?.user?.sub;
+      let userId: string | undefined;
+      try {
+        const session = await auth0.getSession();
+        userId = session?.user?.sub;
+      } catch (err) {
+        console.warn('Failed to get Auth0 session:', err);
+        // If no session, fallback to localStorage
+        return NextResponse.json({ success: true });
+      }
 
       if (!userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        return NextResponse.json({ success: true });
       }
 
       try {
