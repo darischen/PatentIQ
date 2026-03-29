@@ -1,8 +1,9 @@
-import { spawn } from 'child_process';
-import { join } from 'path';
+import fernet from 'fernet';
+import * as fs from 'fs';
+import * as path from 'path';
 
 /**
- * Encryption operations using Python security module
+ * Encryption operations using Fernet symmetric encryption
  * Handles encrypt/decrypt with simple async/await interface
  */
 
@@ -31,66 +32,84 @@ export interface TransportValidationResult {
   error?: string;
 }
 
+const AUDIT_LOG_PATH = '.security_audit.log';
+
 /**
- * Execute Python encryption operation and return result
+ * Get or generate encryption key (base64-encoded Fernet key)
  */
-async function executeEncryptionOp(operation: string, data: any): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const scriptPath = join(process.cwd(), 'scripts', 'encrypt_operations.py');
-    const python = spawn('python', [scriptPath]);
+function getKeyMaterial(keyMaterial?: string): string {
+  if (keyMaterial) {
+    return keyMaterial;
+  }
 
-    let output = '';
-    let errorOutput = '';
+  const envKey = process.env.DATA_ENCRYPTION_KEY;
+  if (envKey) {
+    return envKey;
+  }
 
-    python.stdout.on('data', (data) => {
-      output += data.toString();
-    });
+  const keyDir = path.join(process.cwd(), '.keys');
+  const keyFile = path.join(keyDir, 'data_encryption.key');
 
-    python.stderr.on('data', (data) => {
-      errorOutput += data.toString();
-    });
+  if (fs.existsSync(keyFile)) {
+    return fs.readFileSync(keyFile, 'utf-8').trim();
+  }
 
-    python.on('close', (code) => {
-      if (code !== 0) {
-        console.error('[Encryption] Python error:', errorOutput);
-        reject(new Error(errorOutput || `Python exited with code ${code}`));
-        return;
-      }
+  if (!fs.existsSync(keyDir)) {
+    fs.mkdirSync(keyDir, { recursive: true });
+  }
 
-      try {
-        resolve(JSON.parse(output));
-      } catch (e) {
-        console.error('[Encryption] JSON parse error:', output);
-        reject(e);
-      }
-    });
+  // Generate a new Fernet key using crypto for randomness
+  // Fernet keys are 32 bytes (256 bits) base64-encoded
+  const crypto = require('crypto');
+  const generated = crypto.randomBytes(32).toString('base64');
+  fs.writeFileSync(keyFile, generated);
+  logEncryptionEvent('key_generated', { key_file: keyFile });
 
-    // Send input via stdin
-    python.stdin.write(JSON.stringify({ operation, ...data }));
-    python.stdin.end();
-  });
+  return generated;
+}
+
+/**
+ * Log encryption events for audit trail
+ */
+function logEncryptionEvent(event: string, details?: Record<string, any>): void {
+  const payload = {
+    timestamp_utc: new Date().toISOString(),
+    event,
+    details: details || {},
+  };
+
+  try {
+    const dir = path.dirname(AUDIT_LOG_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.appendFileSync(AUDIT_LOG_PATH, JSON.stringify(payload) + '\n');
+  } catch (e) {
+    console.error('[Encryption] Failed to write audit log:', e);
+  }
 }
 
 /**
  * Encrypt any JSON-serializable data
  * @param payload Data to encrypt
  * @param keyMaterial Optional encryption key (uses env var or file if not provided)
- * @returns Base64-encoded encrypted data
+ * @returns Fernet-encoded encrypted data
  */
 export async function encryptData(payload: any, keyMaterial?: string): Promise<EncryptResult> {
   try {
-    const result = await executeEncryptionOp('encrypt', {
-      payload,
-      key_material: keyMaterial,
+    const key = getKeyMaterial(keyMaterial);
+    const secret = new fernet.Secret(key);
+    const raw = JSON.stringify(payload);
+
+    const token = new fernet.Token({
+      secret: secret,
     });
+    const encrypted = token.encode(raw);
 
-    if (!result.success) {
-      console.error('[Encryption] Encrypt failed:', result.error);
-      return { success: false, error: result.error };
-    }
-
+    logEncryptionEvent('data_encrypted', { size_bytes: raw.length });
     console.log('[Encryption] Data encrypted successfully');
-    return { success: true, encrypted: result.encrypted };
+
+    return { success: true, encrypted };
   } catch (error) {
     console.error('[Encryption] Encrypt error:', error);
     return { success: false, error: String(error) };
@@ -99,24 +118,26 @@ export async function encryptData(payload: any, keyMaterial?: string): Promise<E
 
 /**
  * Decrypt previously encrypted data
- * @param encrypted Base64-encoded encrypted data
+ * @param encrypted Fernet-encoded encrypted data
  * @param keyMaterial Optional encryption key (uses env var or file if not provided)
  * @returns Decrypted payload
  */
 export async function decryptData(encrypted: string, keyMaterial?: string): Promise<DecryptResult> {
   try {
-    const result = await executeEncryptionOp('decrypt', {
-      encrypted,
-      key_material: keyMaterial,
+    const key = getKeyMaterial(keyMaterial);
+    const secret = new fernet.Secret(key);
+
+    const token = new fernet.Token({
+      secret: secret,
+      token: encrypted,
     });
+    const raw = token.decode();
+    const payload = JSON.parse(raw);
 
-    if (!result.success) {
-      console.error('[Encryption] Decrypt failed:', result.error);
-      return { success: false, error: result.error };
-    }
-
+    logEncryptionEvent('data_decrypted', {});
     console.log('[Encryption] Data decrypted successfully');
-    return { success: true, payload: result.payload };
+
+    return { success: true, payload };
   } catch (error) {
     console.error('[Encryption] Decrypt error:', error);
     return { success: false, error: String(error) };
@@ -134,22 +155,42 @@ export async function validateTransportSecurity(
   minTls: string = 'TLS1.2'
 ): Promise<TransportValidationResult> {
   try {
-    const result = await executeEncryptionOp('validate_transport', {
+    const issues: string[] = [];
+
+    if (!openaiBaseUrl.toLowerCase().startsWith('https://')) {
+      issues.push('OpenAI base URL must use HTTPS.');
+    }
+
+    if (!ustpoBaseUrl.toLowerCase().startsWith('https://')) {
+      issues.push('USPTO base URL must use HTTPS.');
+    }
+
+    const allowedSslmodes = new Set(['require', 'verify-ca', 'verify-full']);
+    if (!allowedSslmodes.has(dbSslmode)) {
+      issues.push(`DB sslmode should be one of ${Array.from(allowedSslmodes).sort().join(', ')}.`);
+    }
+
+    const allowedTls = new Set(['TLS1.2', 'TLS1.3']);
+    if (!allowedTls.has(minTls)) {
+      issues.push('Minimum TLS should be TLS1.2 or TLS1.3.');
+    }
+
+    const status = issues.length === 0 ? 'pass' : 'fail';
+    const validation = {
+      status: status as 'pass' | 'fail',
+      issues,
       openai_base_url: openaiBaseUrl,
       uspto_base_url: ustpoBaseUrl,
       db_sslmode: dbSslmode,
       min_tls: minTls,
-    });
+    };
 
-    if (!result.success) {
-      console.error('[Encryption] Validation failed:', result.error);
-      return { success: false, error: result.error };
-    }
-
+    logEncryptionEvent('transport_encryption_check', validation);
     console.log('[Encryption] Transport validation complete');
+
     return {
-      success: result.success,
-      validation: result.validation,
+      success: status === 'pass',
+      validation,
     };
   } catch (error) {
     console.error('[Encryption] Validation error:', error);
