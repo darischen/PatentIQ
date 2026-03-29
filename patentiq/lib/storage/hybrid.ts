@@ -11,8 +11,15 @@ let activeBackend: StorageBackend = 'localStorage';
 
 // Test which backends are available
 async function detectAvailableBackend(): Promise<StorageBackend> {
-  // If Supabase env vars exist, use Supabase (assume it's available)
-  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  // Check if Supabase env vars are configured
+  const hasSupabaseUrl = typeof window !== 'undefined' && !!process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const hasSupabaseKey = typeof window !== 'undefined' && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  console.log('[Storage] Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'configured' : 'missing');
+  console.log('[Storage] Supabase Key:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'configured' : 'missing');
+
+  // If Supabase env vars exist, use Supabase
+  if (hasSupabaseUrl && hasSupabaseKey) {
     console.log('✓ Using Supabase storage');
     return 'supabase';
   }
