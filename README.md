@@ -62,5 +62,3 @@ User → API → LLM → Patent Database → Analysis Engine → Recommendation 
 ``` git clone https://github.com/haileasy-debug/PatentIQ-ai.git ```
 
 ### 2. Install Dependencies
-
-### 3. 
