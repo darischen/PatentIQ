@@ -241,7 +241,7 @@ export default function ProjectsPage() {
                   {activeMenuId === p.id && (
                     <div
                       ref={menuRef}
-                      className="absolute top-10 right-0 w-56 bg-[#1a1a1a] rounded-2xl shadow-2xl py-2 z-[100] border border-white/10 animate-in fade-in zoom-in-95 duration-200"
+                      className="absolute top-10 right-0 w-56 bg-[#1a1a1a] rounded-2xl shadow-2xl py-2 z-50 border border-white/10 animate-in fade-in zoom-in-95 duration-200"
                     >
                       <div className="px-1.5 space-y-0.5">
                         <button
