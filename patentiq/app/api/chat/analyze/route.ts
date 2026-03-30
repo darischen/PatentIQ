@@ -7,6 +7,7 @@ import { generateRecommendations, type RecommendationResult } from '@/lib/analys
 import { expandQueryWithLLM } from '@/lib/search/queryExpander';
 import { encryptData } from '@/lib/infra/encryption';
 import { detectConceptOverlaps } from '@/lib/analysis/overlapDetection';
+import { auth0 } from '@/lib/auth/auth0';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -236,6 +237,33 @@ Also suggest 2-4 relevant CPC (Cooperative Patent Classification) codes that bes
 }
 
 
+// Update project's updated_timestamp
+async function updateProjectTimestamp(projectId: string) {
+  if (!projectId) return;
+
+  try {
+    const session = await auth0.getSession();
+    const userId = session?.user?.sub;
+
+    if (!userId) return;
+
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    await supabase
+      .from('projects')
+      .update({ updated_timestamp: new Date().toISOString() })
+      .eq('id', projectId)
+      .eq('user_id', userId);
+  } catch (error) {
+    console.error('[Analyze API] Failed to update project timestamp:', error);
+    // Don't throw - analysis succeeded, just timestamp update failed
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { content, transcript, projectId, analysisType } = await req.json();
@@ -316,6 +344,9 @@ export async function POST(req: NextRequest) {
     // 7. Encrypt analysis result for storage
     console.log('[Analyze API] Encrypting analysis result...');
     const { success: encryptSuccess, encrypted } = await encryptData(analysisResult);
+
+    // Update project's updated_at timestamp (fire and forget)
+    await updateProjectTimestamp(projectId);
 
     if (encryptSuccess) {
       console.log('[Analyze API] Analysis result encrypted successfully');

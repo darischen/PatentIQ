@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
               name: project.name,
               user_id: userId,
               created_at: project.createdAt,
-              updated_at: Date.now(),
+              updated_timestamp: new Date().toISOString(),
               thumbnail: project.thumbnail,
               analysis_result: project.analysisResult,
               chat_history: project.chatHistory,

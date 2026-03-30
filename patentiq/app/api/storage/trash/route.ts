@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
             id: p.id,
             name: p.name,
             createdAt: p.created_at,
-            updatedAt: p.updated_at,
+            updatedAt: p.updated_timestamp,
             thumbnail: p.thumbnail,
             analysisResult: p.analysis_result,
             chatHistory: p.chat_history,

@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
             id: p.id,
             name: p.name,
             createdAt: p.created_at,
-            updatedAt: p.updated_at,
+            updatedAt: p.updated_timestamp,
             thumbnail: p.thumbnail,
             analysisResult: p.analysis_result,
             chatHistory: p.chat_history,
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
           name: project.name,
           user_id: userId,
           created_at: project.createdAt,
-          updated_at: Date.now(),
+          updated_timestamp: Date.now(),
           thumbnail: project.thumbnail,
           analysis_result: project.analysisResult,
           chat_history: project.chatHistory,
@@ -175,7 +175,7 @@ export async function PUT(req: NextRequest) {
           thumbnail: project.thumbnail,
           analysis_result: project.analysisResult,
           chat_history: project.chatHistory,
-          updated_at: Date.now(),
+          updated_timestamp: Date.now(),
         };
 
         const { error } = await supabase

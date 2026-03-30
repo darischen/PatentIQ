@@ -69,7 +69,7 @@ async function parsePDF(buffer: Buffer): Promise<string> {
     }
 
     // Use legacy build for Node.js compatibility
-    const pdfModule = await import('pdfjs-dist/legacy/build/pdf.js');
+    const pdfModule = await import('pdfjs-dist/legacy/build/pdf.mjs');
     const { getDocument } = pdfModule as any;
 
     const pdfDocument = await getDocument({ data: new Uint8Array(buffer) }).promise;
