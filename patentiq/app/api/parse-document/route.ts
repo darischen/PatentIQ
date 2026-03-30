@@ -51,50 +51,54 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Parse PDF - text extraction only
+// Parse PDF - text extraction using pdfjs without workers
 async function parsePDF(buffer: Buffer): Promise<string> {
   try {
-    // Polyfill DOMMatrix before importing pdfjs
-    if (typeof global !== 'undefined' && !(global as any).DOMMatrix) {
-      (global as any).DOMMatrix = class DOMMatrix {
-        constructor() {
-          (this as any).a = 1;
-          (this as any).b = 0;
-          (this as any).c = 0;
-          (this as any).d = 1;
-          (this as any).e = 0;
-          (this as any).f = 0;
-        }
-      };
+    // Provide polyfills for Node.js environment
+    if (typeof global !== 'undefined') {
+      if (!(global as any).DOMMatrix) {
+        (global as any).DOMMatrix = class DOMMatrix {
+          a = 1;
+          b = 0;
+          c = 0;
+          d = 1;
+          e = 0;
+          f = 0;
+        };
+      }
     }
 
-    // Use legacy build for Node.js compatibility
+    // Import pdfjs-dist
     const pdfModule = await import('pdfjs-dist/legacy/build/pdf.mjs');
     const { getDocument } = pdfModule as any;
 
-    // Set worker source to CDN before parsing (avoids bundled worker path issues on Vercel)
+    // Disable worker to avoid worker loading issues in serverless
     const pdfAny = pdfModule as any;
     if (pdfAny.GlobalWorkerOptions) {
-      pdfAny.GlobalWorkerOptions.workerSrc =
-        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      pdfAny.GlobalWorkerOptions.disableWorker = true;
     }
 
-    const pdfDocument = await getDocument({ data: new Uint8Array(buffer) }).promise;
+    const pdfDocument = await getDocument({
+      data: new Uint8Array(buffer),
+      disableWorker: true,
+    }).promise;
+
     let fullText = '';
 
     for (let i = 1; i <= pdfDocument.numPages; i++) {
       try {
         const page = await pdfDocument.getPage(i);
         const textContent = await page.getTextContent({ normalizeWhitespace: true });
-        const pageText = (textContent.items as any[]).map((item: any) => item.str).join(' ');
+        const pageText = (textContent.items as any[]).map((item: any) => item.str || '').join(' ');
         fullText += pageText + '\n';
       } catch (pageError) {
         console.warn(`[Parse Document] Failed to extract text from page ${i}:`, pageError);
+        // Continue with next page instead of failing
       }
     }
 
     if (!fullText.trim()) {
-      throw new Error('No text content could be extracted from PDF');
+      throw new Error('No text content extracted from PDF');
     }
 
     return fullText.trim();
