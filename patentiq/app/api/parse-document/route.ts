@@ -72,6 +72,13 @@ async function parsePDF(buffer: Buffer): Promise<string> {
     const pdfModule = await import('pdfjs-dist/legacy/build/pdf.mjs');
     const { getDocument } = pdfModule as any;
 
+    // Set worker source to CDN before parsing (avoids bundled worker path issues on Vercel)
+    const pdfAny = pdfModule as any;
+    if (pdfAny.GlobalWorkerOptions) {
+      pdfAny.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+
     const pdfDocument = await getDocument({ data: new Uint8Array(buffer) }).promise;
     let fullText = '';
 

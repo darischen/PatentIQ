@@ -4,4 +4,5 @@ declare module 'mammoth' {
 
 declare module 'pdfjs-dist/legacy/build/pdf.mjs' {
   export function getDocument(params: { data: Uint8Array }): { promise: Promise<any> };
+  export const GlobalWorkerOptions: { workerSrc?: string };
 }
