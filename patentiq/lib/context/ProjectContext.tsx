@@ -17,7 +17,7 @@ interface ProjectContextType {
   permanentDeleteProject: (id: string) => void;
   selectProject: (project: Project) => void;
   setAnalysisData: (data: AnalysisResult | null) => void;
-  updateProjectAnalysis: (data: AnalysisResult, history: ChatMessage[]) => void;
+  updateProjectAnalysis: (data: AnalysisResult, history: ChatMessage[], updatedAt?: string) => void;
   updateChatHistory: (history: ChatMessage[]) => void;
   renameProject: (id: string, name: string) => void;
   logout: () => void;
@@ -119,11 +119,17 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     setAnalysisDataState(data);
   }, []);
 
-  const updateProjectAnalysis = useCallback((data: AnalysisResult, history: ChatMessage[]) => {
+  const updateProjectAnalysis = useCallback((data: AnalysisResult, history: ChatMessage[], updatedAt?: string) => {
     setAnalysisDataState(data);
     setActiveProject(prev => {
       if (!prev) return prev;
-      const updated = { ...prev, analysisResult: data, chatHistory: history };
+      const updated = {
+        ...prev,
+        analysisResult: data,
+        chatHistory: history,
+        // Update timestamp if provided from API response
+        ...(updatedAt && { updatedAt: new Date(updatedAt).getTime() })
+      };
       setProjects(ps => ps.map(p => p.id === prev.id ? updated : p));
       storage.updateProject(updated);
       return updated;

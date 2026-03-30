@@ -143,7 +143,9 @@ export default function ProjectWelcomePage() {
 
       const result: AnalysisResult = await res.json();
       result.analysisType = activeAgent;
-      updateProjectAnalysis(result, finalHistory);
+      // Pass the updated timestamp from the API response
+      const updatedAt = (result as any)._projectUpdatedAt;
+      updateProjectAnalysis(result, finalHistory, updatedAt);
       router.push(`/project/${id}/dashboard`);
     } catch (err: unknown) {
       console.error('AI Analysis Error:', err);

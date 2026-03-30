@@ -239,13 +239,20 @@ Also suggest 2-4 relevant CPC (Cooperative Patent Classification) codes that bes
 
 // Update project's updated_timestamp
 async function updateProjectTimestamp(projectId: string) {
-  if (!projectId) return;
+  if (!projectId) {
+    console.warn('[Analyze API] No projectId provided, skipping timestamp update');
+    return;
+  }
 
   try {
+    console.log(`[Analyze API] Updating timestamp for project: ${projectId}`);
     const session = await auth0.getSession();
     const userId = session?.user?.sub;
 
-    if (!userId) return;
+    if (!userId) {
+      console.warn('[Analyze API] No userId in session, skipping timestamp update');
+      return;
+    }
 
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(
@@ -253,11 +260,20 @@ async function updateProjectTimestamp(projectId: string) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    await supabase
+    const timestamp = new Date().toISOString();
+    console.log(`[Analyze API] Setting updated_timestamp to: ${timestamp}`);
+
+    const { error } = await supabase
       .from('projects')
-      .update({ updated_timestamp: new Date().toISOString() })
+      .update({ updated_timestamp: timestamp })
       .eq('id', projectId)
       .eq('user_id', userId);
+
+    if (error) {
+      console.error('[Analyze API] Supabase update error:', error);
+    } else {
+      console.log('[Analyze API] Timestamp updated successfully');
+    }
   } catch (error) {
     console.error('[Analyze API] Failed to update project timestamp:', error);
     // Don't throw - analysis succeeded, just timestamp update failed
@@ -345,20 +361,25 @@ export async function POST(req: NextRequest) {
     console.log('[Analyze API] Encrypting analysis result...');
     const { success: encryptSuccess, encrypted } = await encryptData(analysisResult);
 
-    // Update project's updated_at timestamp (fire and forget)
+    // 8. Update project's updated_timestamp
+    const timestamp = new Date().toISOString();
     await updateProjectTimestamp(projectId);
 
     if (encryptSuccess) {
       console.log('[Analyze API] Analysis result encrypted successfully');
-      // Include encrypted version in response metadata (optional)
+      // Include encrypted version and timestamp in response
       const responseWithEncryption = {
         ...analysisResult,
         _encrypted: encrypted, // For backend storage
+        _projectUpdatedAt: timestamp, // For frontend to update locally
       };
       return NextResponse.json(responseWithEncryption);
     } else {
       console.warn('[Analyze API] Encryption failed, returning unencrypted');
-      return NextResponse.json(analysisResult);
+      return NextResponse.json({
+        ...analysisResult,
+        _projectUpdatedAt: timestamp,
+      });
     }
   } catch (error) {
     console.error('Analysis API error:', error);
