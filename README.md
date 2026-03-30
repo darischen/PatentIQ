@@ -64,4 +64,4 @@ User → API → LLM → Patent Database → Analysis Engine → Recommendation 
 ### 2. Install Dependencies
 ``` npm install ```
 
-### 3. 
+### 3.
