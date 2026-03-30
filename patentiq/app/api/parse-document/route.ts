@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Parse PDF - text extraction using pdfjs without workers
+// Parse PDF - hidden require to avoid bundler detection
 async function parsePDF(buffer: Buffer): Promise<string> {
   try {
     // Provide polyfills for Node.js environment
@@ -68,14 +68,15 @@ async function parsePDF(buffer: Buffer): Promise<string> {
       }
     }
 
-    // Import pdfjs-dist
-    const pdfModule = await import('pdfjs-dist/legacy/build/pdf.mjs');
-    const { getDocument } = pdfModule as any;
+    // Hide require from bundler using Function constructor
+    // This allows pdfjs-dist to load at runtime without build-time bundling
+    const requireFunc = new Function('moduleName', 'return require(moduleName)');
+    const pdfModule = requireFunc('pdfjs-dist') as any;
+    const { getDocument, GlobalWorkerOptions } = pdfModule;
 
     // Disable worker to avoid worker loading issues in serverless
-    const pdfAny = pdfModule as any;
-    if (pdfAny.GlobalWorkerOptions) {
-      pdfAny.GlobalWorkerOptions.disableWorker = true;
+    if (GlobalWorkerOptions) {
+      GlobalWorkerOptions.disableWorker = true;
     }
 
     const pdfDocument = await getDocument({
@@ -93,7 +94,6 @@ async function parsePDF(buffer: Buffer): Promise<string> {
         fullText += pageText + '\n';
       } catch (pageError) {
         console.warn(`[Parse Document] Failed to extract text from page ${i}:`, pageError);
-        // Continue with next page instead of failing
       }
     }
 
