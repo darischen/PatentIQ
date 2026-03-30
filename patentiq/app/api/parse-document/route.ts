@@ -54,6 +54,18 @@ export async function POST(req: NextRequest) {
 // Parse PDF using pdf-parse
 async function parsePDF(buffer: Buffer): Promise<string> {
   try {
+    // Set up Node.js environment for pdfjs-dist
+    if (typeof global !== 'undefined' && !(global as any).DOMMatrix) {
+      (global as any).DOMMatrix = class DOMMatrix {
+        a = 1;
+        b = 0;
+        c = 0;
+        d = 1;
+        e = 0;
+        f = 0;
+      };
+    }
+
     // Dynamic import to avoid issues if pdf-parse isn't installed
     const pdfParse = await import('pdf-parse');
     const pdf = await (pdfParse as any)(buffer);
@@ -67,10 +79,10 @@ async function parsePDF(buffer: Buffer): Promise<string> {
 async function parseDOCX(buffer: Buffer): Promise<string> {
   try {
     // Dynamic import to avoid issues if docx-parser isn't installed
-    const docxParser = await import('docx-parser');
-    const parser = new docxParser.DocxParser();
-    const doc = await parser.parseBuffer(buffer);
-    return doc.text || '';
+    const DocxParser = (await import('docx-parser')).default;
+    const parser = new DocxParser();
+    const result = await parser.parseBuffer(buffer);
+    return result.text || '';
   } catch (error) {
     throw new Error(`DOCX parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
