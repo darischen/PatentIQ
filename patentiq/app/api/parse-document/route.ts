@@ -86,10 +86,9 @@ async function parsePDF(buffer: Buffer): Promise<string> {
 async function parseDOCX(buffer: Buffer): Promise<string> {
   try {
     // Dynamic import to avoid issues if docx-parser isn't installed
-    const { DocxParser } = await import('docx-parser');
-    const parser = new DocxParser();
-    const result = await parser.parseBuffer(buffer);
-    return result.text || '';
+    const { parseDocx } = await import('docx-parser');
+    const result = await (parseDocx as any)(buffer);
+    return result.text || result || '';
   } catch (error) {
     throw new Error(`DOCX parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }

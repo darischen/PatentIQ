@@ -1,7 +1,5 @@
 declare module 'docx-parser' {
-  export class DocxParser {
-    parseBuffer(buffer: Buffer): Promise<{ text: string }>;
-  }
+  export function parseDocx(buffer: Buffer): Promise<{ text: string } | string>;
 }
 
 declare module 'pdfjs-dist/build/pdf.mjs' {
