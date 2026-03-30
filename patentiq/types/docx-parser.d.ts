@@ -2,6 +2,6 @@ declare module 'mammoth' {
   export function extractRawText(input: Buffer | ArrayBufferLike): Promise<{ value: string }>;
 }
 
-declare module 'pdfjs-dist/build/pdf.mjs' {
+declare module 'pdfjs-dist/legacy/build/pdf.js' {
   export function getDocument(params: { data: Uint8Array }): { promise: Promise<any> };
 }

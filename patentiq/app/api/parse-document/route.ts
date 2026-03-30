@@ -54,8 +54,22 @@ export async function POST(req: NextRequest) {
 // Parse PDF - text extraction only
 async function parsePDF(buffer: Buffer): Promise<string> {
   try {
-    // Use pdfjs-dist for text extraction (ES module)
-    const pdfModule = await import('pdfjs-dist/build/pdf.mjs');
+    // Polyfill DOMMatrix before importing pdfjs
+    if (typeof global !== 'undefined' && !(global as any).DOMMatrix) {
+      (global as any).DOMMatrix = class DOMMatrix {
+        constructor() {
+          (this as any).a = 1;
+          (this as any).b = 0;
+          (this as any).c = 0;
+          (this as any).d = 1;
+          (this as any).e = 0;
+          (this as any).f = 0;
+        }
+      };
+    }
+
+    // Use legacy build for Node.js compatibility
+    const pdfModule = await import('pdfjs-dist/legacy/build/pdf.js');
     const { getDocument } = pdfModule as any;
 
     const pdfDocument = await getDocument({ data: new Uint8Array(buffer) }).promise;
