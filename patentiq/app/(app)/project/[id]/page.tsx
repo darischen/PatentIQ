@@ -143,7 +143,7 @@ export default function ProjectWelcomePage() {
 
       const result: AnalysisResult = await res.json();
       result.analysisType = activeAgent;
-      // Pass the updated timestamp from the API response
+      // Pass the updated timestamp from the API response (milliseconds)
       const updatedAt = (result as any)._projectUpdatedAt;
       updateProjectAnalysis(result, finalHistory, updatedAt);
       router.push(`/project/${id}/dashboard`);

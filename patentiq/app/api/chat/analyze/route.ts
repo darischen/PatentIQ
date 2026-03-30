@@ -254,23 +254,26 @@ async function updateProjectTimestamp(projectId: string) {
       return;
     }
 
+    console.log(`[Analyze API] userId: ${userId}`);
+
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    const timestamp = new Date().toISOString();
-    console.log(`[Analyze API] Setting updated_timestamp to: ${timestamp}`);
+    // Use milliseconds for updated_at (BIGINT column, like created_at)
+    const timestampMs = Date.now();
+    console.log(`[Analyze API] Setting updated_at to: ${timestampMs}`);
 
-    const { error } = await supabase
+    const result = await supabase
       .from('projects')
-      .update({ updated_timestamp: timestamp })
+      .update({ updated_at: timestampMs })
       .eq('id', projectId)
       .eq('user_id', userId);
 
-    if (error) {
-      console.error('[Analyze API] Supabase update error:', error);
+    if (result.error) {
+      console.error('[Analyze API] Supabase update error:', result.error);
     } else {
       console.log('[Analyze API] Timestamp updated successfully');
     }
@@ -361,8 +364,8 @@ export async function POST(req: NextRequest) {
     console.log('[Analyze API] Encrypting analysis result...');
     const { success: encryptSuccess, encrypted } = await encryptData(analysisResult);
 
-    // 8. Update project's updated_timestamp
-    const timestamp = new Date().toISOString();
+    // 8. Update project's updated_at timestamp
+    const timestamp = Date.now();
     await updateProjectTimestamp(projectId);
 
     if (encryptSuccess) {

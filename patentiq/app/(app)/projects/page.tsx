@@ -247,7 +247,7 @@ export default function ProjectsPage() {
                       <MoreHorizontal size={14} className="text-slate-400 group-hover:text-slate-600" />
                     </button>
                   </div>
-                  <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">Edited {formatRelativeTime(p.createdAt)}</p>
+                  <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">Edited {formatRelativeTime(p.updatedAt || p.createdAt)}</p>
 
                   {/* Reference Style Context Menu */}
                   {activeMenuId === p.id && (

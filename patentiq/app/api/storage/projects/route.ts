@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
           name: project.name,
           user_id: userId,
           created_at: project.createdAt,
-          updated_timestamp: new Date().toISOString(),
+          updated_at: Date.now(),
           thumbnail: project.thumbnail,
           analysis_result: project.analysisResult,
           chat_history: project.chatHistory,
@@ -175,7 +175,7 @@ export async function PUT(req: NextRequest) {
           thumbnail: project.thumbnail,
           analysis_result: project.analysisResult,
           chat_history: project.chatHistory,
-          updated_timestamp: new Date().toISOString(),
+          updated_at: Date.now(),
         };
 
         const { error } = await supabase

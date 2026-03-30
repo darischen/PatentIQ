@@ -28,7 +28,7 @@ export default function HistoryPage() {
       .map(p => ({
         id: p.id,
         name: p.name,
-        createdAt: p.createdAt,
+        createdAt: p.updatedAt || p.createdAt,
         novelty: p.analysisResult?.noveltyScore || 0,
         confidence: p.analysisResult?.confidence || 0,
         status: 'Completed' as const,

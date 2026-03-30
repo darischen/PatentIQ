@@ -62,6 +62,7 @@ export interface Project {
   name: string;
   date?: string; // For backward compatibility
   createdAt: number; // timestamp in ms
+  updatedAt?: number; // timestamp when last edited
   deletedAt?: number; // timestamp when deleted, only set for trash items
   thumbnail?: string;
   chatHistory?: ChatMessage[];
