@@ -87,9 +87,8 @@ async function parseDOCX(buffer: Buffer): Promise<string> {
   try {
     // Use mammoth which handles buffers directly without filesystem writes
     const mammoth = await import('mammoth');
-    // Convert Buffer to ArrayBuffer (get the underlying ArrayBuffer from the Buffer)
-    const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
-    const result = await (mammoth as any).extractRawText({ arrayBuffer });
+    // Pass buffer directly - mammoth accepts buffers as input
+    const result = await (mammoth as any).extractRawText(buffer);
     return result.value || '';
   } catch (error) {
     throw new Error(`DOCX parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
