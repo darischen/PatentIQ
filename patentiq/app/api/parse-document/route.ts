@@ -79,7 +79,7 @@ async function parsePDF(buffer: Buffer): Promise<string> {
 async function parseDOCX(buffer: Buffer): Promise<string> {
   try {
     // Dynamic import to avoid issues if docx-parser isn't installed
-    const DocxParser = (await import('docx-parser')).default;
+    const { DocxParser } = await import('docx-parser');
     const parser = new DocxParser();
     const result = await parser.parseBuffer(buffer);
     return result.text || '';
