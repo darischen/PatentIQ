@@ -1,5 +1,5 @@
-declare module 'docx-parser' {
-  export function parseDocx(buffer: Buffer): Promise<{ text: string } | string>;
+declare module 'mammoth' {
+  export function extractRawText(options: { arrayBuffer: ArrayBufferLike }): Promise<{ value: string }>;
 }
 
 declare module 'pdfjs-dist/build/pdf.mjs' {

@@ -82,13 +82,15 @@ async function parsePDF(buffer: Buffer): Promise<string> {
   }
 }
 
-// Parse DOCX using docx-parser
+// Parse DOCX using mammoth
 async function parseDOCX(buffer: Buffer): Promise<string> {
   try {
-    // Dynamic import to avoid issues if docx-parser isn't installed
-    const { parseDocx } = await import('docx-parser');
-    const result = await (parseDocx as any)(buffer);
-    return result.text || result || '';
+    // Use mammoth which handles buffers directly without filesystem writes
+    const mammoth = await import('mammoth');
+    // Convert Buffer to ArrayBuffer (get the underlying ArrayBuffer from the Buffer)
+    const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+    const result = await (mammoth as any).extractRawText({ arrayBuffer });
+    return result.value || '';
   } catch (error) {
     throw new Error(`DOCX parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
