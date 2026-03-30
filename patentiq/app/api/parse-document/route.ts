@@ -51,25 +51,32 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Parse PDF using pdf-parse
+// Parse PDF - text extraction only
 async function parsePDF(buffer: Buffer): Promise<string> {
   try {
-    // Set up Node.js environment for pdfjs-dist
-    if (typeof global !== 'undefined' && !(global as any).DOMMatrix) {
-      (global as any).DOMMatrix = class DOMMatrix {
-        a = 1;
-        b = 0;
-        c = 0;
-        d = 1;
-        e = 0;
-        f = 0;
-      };
+    // Use pdfjs-dist for text extraction (ES module)
+    const pdfModule = await import('pdfjs-dist/build/pdf.mjs');
+    const { getDocument } = pdfModule as any;
+
+    const pdfDocument = await getDocument({ data: new Uint8Array(buffer) }).promise;
+    let fullText = '';
+
+    for (let i = 1; i <= pdfDocument.numPages; i++) {
+      try {
+        const page = await pdfDocument.getPage(i);
+        const textContent = await page.getTextContent({ normalizeWhitespace: true });
+        const pageText = (textContent.items as any[]).map((item: any) => item.str).join(' ');
+        fullText += pageText + '\n';
+      } catch (pageError) {
+        console.warn(`[Parse Document] Failed to extract text from page ${i}:`, pageError);
+      }
     }
 
-    // Dynamic import to avoid issues if pdf-parse isn't installed
-    const pdfParse = await import('pdf-parse');
-    const pdf = await (pdfParse as any)(buffer);
-    return pdf.text;
+    if (!fullText.trim()) {
+      throw new Error('No text content could be extracted from PDF');
+    }
+
+    return fullText.trim();
   } catch (error) {
     throw new Error(`PDF parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
