@@ -18,8 +18,11 @@ export async function POST(req: NextRequest) {
     let content = '';
 
     if (fileName.endsWith('.pdf')) {
-      // PDF parsing
-      content = await parsePDF(buffer);
+      // PDF parsing not available on Vercel due to canvas native dependency
+      return NextResponse.json(
+        { error: 'PDF parsing is not available in this environment. Please convert to DOCX, TXT, or MD format.' },
+        { status: 400 }
+      );
     } else if (fileName.endsWith('.docx')) {
       // DOCX parsing
       content = await parseDOCX(buffer);
@@ -28,7 +31,7 @@ export async function POST(req: NextRequest) {
       content = buffer.toString('utf-8');
     } else {
       return NextResponse.json(
-        { error: 'Unsupported file format. Please use PDF, DOCX, TXT, or MD.' },
+        { error: 'Unsupported file format. Please use DOCX, TXT, or MD.' },
         { status: 400 }
       );
     }
@@ -48,62 +51,6 @@ export async function POST(req: NextRequest) {
       { error: msg },
       { status: 500 }
     );
-  }
-}
-
-// Parse PDF - hidden require to avoid bundler detection
-async function parsePDF(buffer: Buffer): Promise<string> {
-  try {
-    // Provide polyfills for Node.js environment
-    if (typeof global !== 'undefined') {
-      if (!(global as any).DOMMatrix) {
-        (global as any).DOMMatrix = class DOMMatrix {
-          a = 1;
-          b = 0;
-          c = 0;
-          d = 1;
-          e = 0;
-          f = 0;
-        };
-      }
-    }
-
-    // Hide require from bundler using Function constructor
-    // This allows pdfjs-dist to load at runtime without build-time bundling
-    const requireFunc = new Function('moduleName', 'return require(moduleName)');
-    const pdfModule = requireFunc('pdfjs-dist') as any;
-    const { getDocument, GlobalWorkerOptions } = pdfModule;
-
-    // Disable worker to avoid worker loading issues in serverless
-    if (GlobalWorkerOptions) {
-      GlobalWorkerOptions.disableWorker = true;
-    }
-
-    const pdfDocument = await getDocument({
-      data: new Uint8Array(buffer),
-      disableWorker: true,
-    }).promise;
-
-    let fullText = '';
-
-    for (let i = 1; i <= pdfDocument.numPages; i++) {
-      try {
-        const page = await pdfDocument.getPage(i);
-        const textContent = await page.getTextContent({ normalizeWhitespace: true });
-        const pageText = (textContent.items as any[]).map((item: any) => item.str || '').join(' ');
-        fullText += pageText + '\n';
-      } catch (pageError) {
-        console.warn(`[Parse Document] Failed to extract text from page ${i}:`, pageError);
-      }
-    }
-
-    if (!fullText.trim()) {
-      throw new Error('No text content extracted from PDF');
-    }
-
-    return fullText.trim();
-  } catch (error) {
-    throw new Error(`PDF parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
