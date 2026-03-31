@@ -170,7 +170,13 @@ async function transformRealPatentsToAnalysis(
 Similar patents found in database:
 ${patentContext}
 
-Based on these patent search results, assess the novelty score (0-100) where higher scores indicate more novel inventions with less overlap to existing patents. Also suggest 2-4 relevant CPC (Cooperative Patent Classification) codes that best classify this invention.`,
+Based on these patent search results, assess the novelty score (0-100):
+- If the most similar patent has high overlap (>80% similarity), novelty should be LOW (20-40)
+- If overlap is moderate (60-80% similarity), novelty should be MEDIUM (40-70)
+- If overlap is low (<60% similarity) or no patents found, novelty should be HIGH (70-100)
+- The novelty score should inversely correlate with the highest similarity score found
+
+Also suggest 2-4 relevant CPC (Cooperative Patent Classification) codes that best classify this invention.`,
       },
     ],
     max_tokens: 2000,
