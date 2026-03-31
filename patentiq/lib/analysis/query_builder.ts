@@ -84,7 +84,7 @@ function buildSqlWhere(group: LogicalGroup): string {
  */
 export async function rankPatents(
   queryText: string,
-  topK: number = 5,
+  topK?: number,
   structuredFilters?: any
 ): Promise<PatentResult[]> {
   try {
@@ -130,8 +130,11 @@ export async function rankPatents(
     query = `
       SELECT * FROM (${query}) AS deduped
       ORDER BY similarity_score DESC
-      LIMIT ${topK}
     `;
+
+    if (topK) {
+      query += `LIMIT ${topK}`;
+    }
 
     const queryResult = await db.query(query, [vectorString]);
     const results = queryResult.rows as PatentResult[];
