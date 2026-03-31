@@ -130,6 +130,11 @@ async function transformRealPatentsToAnalysis(
   // Extract top patent as closest prior art
   const closestPriorArt = realPatents[0]?.application_number || realPatents[0]?.id || realPatents[0]?.patent_id || '';
 
+  // Build patent context for the LLM
+  const patentContext = realPatents.length > 0
+    ? realPatents.map((p, i) => `${i + 1}. "${p.title}" (Similarity: ${(p.similarity_score * 100).toFixed(1)}%)`).join('\n')
+    : 'No similar patents found in database.';
+
   // Use OpenAI to analyze the user's input and extract features
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -162,7 +167,10 @@ async function transformRealPatentsToAnalysis(
         role: 'user',
         content: `Analyze this invention: ${userInput}
 
-Also suggest 2-4 relevant CPC (Cooperative Patent Classification) codes that best classify this invention.`,
+Similar patents found in database:
+${patentContext}
+
+Based on these patent search results, assess the novelty score (0-100) where higher scores indicate more novel inventions with less overlap to existing patents. Also suggest 2-4 relevant CPC (Cooperative Patent Classification) codes that best classify this invention.`,
       },
     ],
     max_tokens: 2000,
