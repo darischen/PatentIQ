@@ -135,6 +135,9 @@ async function transformRealPatentsToAnalysis(
     ? realPatents.map((p, i) => `${i + 1}. "${p.title}" (Similarity: ${(p.similarity_score * 100).toFixed(1)}%)`).join('\n')
     : 'No similar patents found in database.';
 
+  // Get top patent similarity for context
+  const topPatentSimilarity = realPatents.length > 0 ? (realPatents[0].similarity_score * 100).toFixed(1) : '0';
+
   // Use OpenAI to analyze the user's input and extract features
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -170,11 +173,13 @@ async function transformRealPatentsToAnalysis(
 Similar patents found in database:
 ${patentContext}
 
-Based on these patent search results, assess the novelty score (0-100):
-- If the most similar patent has high overlap (>80% similarity), novelty should be LOW (20-40)
-- If overlap is moderate (60-80% similarity), novelty should be MEDIUM (40-70)
-- If overlap is low (<60% similarity) or no patents found, novelty should be HIGH (70-100)
-- The novelty score should inversely correlate with the highest similarity score found
+Based on these patent search results, calculate the novelty score (0-100) using this formula:
+1. Count how many features you identified as "unique" vs "high-risk"
+2. Calculate: noveltyScore = (unique_features / total_features) * 100
+3. Then adjust for the top patent's similarity: noveltyScore -= (top_patent_similarity / 100) * 50
+4. Clamp the result between 0 and 100
+
+The top patent has ${topPatentSimilarity}% similarity. Use this exact formula to derive the noveltyScore value.
 
 Also suggest 2-4 relevant CPC (Cooperative Patent Classification) codes that best classify this invention.`,
       },
@@ -214,30 +219,47 @@ Also suggest 2-4 relevant CPC (Cooperative Patent Classification) codes that bes
     Array.isArray(overlaps) ? overlaps : []
   );
 
+  // Map features with their statuses first (for novelty calculation)
+  const mappedFeatures = (analysisData.features || []).map((f: any, idx: number) => {
+    const riskData = featureRiskData[f.name];
+    const status = riskData
+      ? riskData.status
+      : f.riskLevel === 'high'
+        ? 'high-risk'
+        : f.riskLevel === 'low'
+          ? 'unique'
+          : 'partial';
+
+    return {
+      id: `feature-${idx}`,
+      name: f.name || '',
+      status: status as 'unique' | 'partial' | 'high-risk' | 'standard',
+      description: f.description || '',
+      domain: f.domain || 'Technical',
+      category: idx === 0 ? ('Core' as const) : ('Technical' as const),
+    };
+  });
+
+  // Calculate novelty score based on feature ratio and patent similarity (fallback algorithm)
+  const totalFeatures = mappedFeatures.length;
+  const uniqueFeatures = mappedFeatures.filter((f: any) => f.status === 'unique').length;
+  const uniqueRatio = totalFeatures > 0 ? uniqueFeatures / totalFeatures : 0;
+
+  // Base novelty from feature uniqueness (0-100)
+  let fallbackNoveltyScore = uniqueRatio * 100;
+
+  // Adjust down based on top patent similarity (reduce by up to 50 points)
+  const topPatentSimilarityDecimal = realPatents.length > 0 ? realPatents[0].similarity_score : 0;
+  fallbackNoveltyScore -= topPatentSimilarityDecimal * 50;
+
+  // Clamp to 0-100 range
+  fallbackNoveltyScore = Math.max(0, Math.min(100, fallbackNoveltyScore));
+
   return {
-    noveltyScore: analysisData.noveltyScore || 70,
+    noveltyScore: analysisData.noveltyScore ?? Math.round(fallbackNoveltyScore),
     confidence: analysisData.confidence || 85,
     summary: analysisData.contextOverview || 'Patent analysis completed.',
-    features: (analysisData.features || []).map((f: any, idx: number) => {
-      const riskData = featureRiskData[f.name];
-      // Use overlap-based status if available, otherwise fall back to OpenAI's assessment
-      const status = riskData
-        ? riskData.status
-        : f.riskLevel === 'high'
-          ? 'high-risk'
-          : f.riskLevel === 'low'
-            ? 'unique'
-            : 'partial';
-
-      return {
-        id: `feature-${idx}`,
-        name: f.name || '',
-        status: status as 'unique' | 'partial' | 'high-risk' | 'standard',
-        description: f.description || '',
-        domain: f.domain || 'Technical',
-        category: idx === 0 ? ('Core' as const) : ('Technical' as const),
-      };
-    }),
+    features: mappedFeatures,
     topRiskFeature: analysisData.features?.[0]?.name || 'Technical Implementation',
     closestPriorArt: closestPriorArt,
     featuresAnalyzed: analysisData.features?.length || 3,
