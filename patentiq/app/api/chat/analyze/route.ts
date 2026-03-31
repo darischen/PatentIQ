@@ -307,7 +307,7 @@ export async function POST(req: NextRequest) {
     let overlaps: Record<string, any> = {};
 
     try {
-      const rawPatents = await rankPatents(expanded, 5);
+      const rawPatents = await rankPatents(expanded);
       console.log(`[Analyze API] Found ${rawPatents.length} real patents`);
 
       // 3. Generate AI explanations for why each patent matched (uses original text)
