@@ -112,7 +112,7 @@ Similar Patents Found:
 ${patentSummaries}`,
         },
       ],
-      max_tokens: 800,
+      max_tokens: 2000,
       temperature: 0.3,
       response_format: { type: 'json_object' },
     });
