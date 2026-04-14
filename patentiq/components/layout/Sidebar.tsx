@@ -67,7 +67,7 @@ export default function Sidebar({ projectId }: SidebarProps) {
           <Grid className="text-white w-6 h-6" />
         </div>
         <span className="text-[#1e293b] font-bold text-xl tracking-tight group-hover:text-indigo-600 transition-colors">
-          PatentIQ
+          NovelIQ
         </span>
       </Link>
 

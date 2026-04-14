@@ -213,7 +213,7 @@ export default function ProjectWelcomePage() {
           <div className="w-10 h-10 bg-[#4f46e5] rounded-full flex items-center justify-center shadow-lg shadow-indigo-500/30 transition-transform group-hover:scale-105">
             <Grid className="text-white w-5 h-5" />
           </div>
-          <span className="text-slate-900 font-bold text-[18px] tracking-tight hidden sm:block">PatentIQ</span>
+          <span className="text-slate-900 font-bold text-[18px] tracking-tight hidden sm:block">NovelIQ</span>
         </Link>
 
         {/* Center Section: Dark Navigation Pill */}
@@ -543,7 +543,7 @@ export default function ProjectWelcomePage() {
       </div>
 
       <footer className="mt-auto py-6 text-slate-300 font-bold text-[10px] tracking-[0.3em] uppercase">
-        PatentIQ &bull; Enterprise AI Engine
+        NovelIQ &bull; Enterprise AI Engine
       </footer>
 
       {/* Error Toast */}

@@ -9,7 +9,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "PatentIQ - AI Patent Intelligence Platform",
+  title: "NovelIQ - AI Patent Intelligence Platform",
   description: "AI-powered patent analysis, novelty scoring, and prior art exploration",
 };
 

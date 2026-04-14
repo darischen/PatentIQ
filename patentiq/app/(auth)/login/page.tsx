@@ -32,7 +32,7 @@ export default function LoginPage() {
                 <Grid className="text-white w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-[#1e293b] leading-none">PatentIQ</h2>
+                <h2 className="text-lg font-bold text-[#1e293b] leading-none">NovelIQ</h2>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">IP Management Suite</p>
               </div>
             </div>
@@ -72,7 +72,7 @@ export default function LoginPage() {
           </div>
 
           <div className="text-slate-400 text-xs font-medium">
-            &copy; 2025 PatentIQ. All rights reserved.
+            &copy; 2025 NovelIQ. All rights reserved.
           </div>
         </div>
 
@@ -86,7 +86,7 @@ export default function LoginPage() {
 
           <div className="w-full max-w-2xl relative z-10 animate-in fade-in slide-in-from-right-8 duration-1000">
             <div className="mb-10 space-y-2">
-              <span className="bg-white/80 backdrop-blur px-4 py-1.5 rounded-full text-[10px] font-bold text-slate-500 uppercase tracking-widest shadow-sm">PatentIQ Overview</span>
+              <span className="bg-white/80 backdrop-blur px-4 py-1.5 rounded-full text-[10px] font-bold text-slate-500 uppercase tracking-widest shadow-sm">NovelIQ Overview</span>
               <h2 className="text-4xl font-bold text-slate-800 leading-tight">
                 Manage your technical <br /> innovations <span className="text-[#7c3aed]">more professionally</span>
               </h2>
@@ -100,7 +100,7 @@ export default function LoginPage() {
                   <div className="w-6 h-6 bg-[#7c3aed] rounded-md flex items-center justify-center">
                     <Grid className="text-white w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-slate-800">PatentIQ</span>
+                  <span className="text-xs font-bold text-slate-800">NovelIQ</span>
                 </div>
 
                 <div className="space-y-4">

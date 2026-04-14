@@ -40,7 +40,7 @@ export default function ForgotPasswordPage() {
               <Grid className="text-white w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-[#1e293b] leading-none">PatentIQ</h2>
+              <h2 className="text-lg font-bold text-[#1e293b] leading-none">NovelIQ</h2>
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">IP Management Suite</p>
             </div>
           </div>
@@ -95,7 +95,7 @@ export default function ForgotPasswordPage() {
           </div>
 
           <div className="mt-8 text-slate-400 text-xs font-medium text-center">
-            &copy; 2025 PatentIQ. All rights reserved.
+            &copy; 2025 NovelIQ. All rights reserved.
           </div>
         </div>
       </div>
